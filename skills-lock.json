@@ -64,6 +64,13 @@
       "skillPath": "skills/getting-started/SKILL.md",
       "computedHash": "23ab46622e300309226ee0ca61b9a5a20d0b321a49f18601ac300def31589c19"
     },
+    "langfuse": {
+      "source": "langfuse/skills",
+      "commit": "f0bcb13088b490c04b3f4870bace17f6d57b199c",
+      "sourceType": "github",
+      "skillPath": "skills/langfuse/SKILL.md",
+      "computedHash": "a35653229c8f110a1c950bce100edaf84870b8037dd59c940031e8434b9e15f0"
+    },
     "test-crewai-project": {
       "source": "crewAIInc/skills",
       "commit": "bebb6e8fc10bb8d07961969fb7bfd7d6091b421a",
