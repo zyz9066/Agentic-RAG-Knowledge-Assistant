@@ -106,7 +106,12 @@ only during implementation.
 1. Use a Streamlit form to snapshot a batch and explicit submit action. Keep
    status in session state across reruns, avoid repeating a submission on rerun,
    and update visible per-file statuses. Validate count, size, extension, content,
-   and duplicate names server-side; never trust the widget filter alone.
+   and duplicate names server-side; never trust the widget filter alone. Report
+   all applicable per-file validation reasons within a permitted-size batch;
+   reject an oversized batch for count before per-file processing. Make the
+   upload view keyboard-operable and associate each filename with textual
+   status and error information accessible to screen readers without relying
+   on color alone.
 2. Read UTF-8 text and extract PDF text with pypdf. Reject empty, unreadable,
    corrupt, encrypted, and no-text inputs explicitly. Split with overlap using
    the embedding model's tokenizer and token limit, including special tokens;
@@ -130,10 +135,14 @@ only during implementation.
    server configuration and fail closed on non-loopback binding. Keep Streamlit
    security protections enabled and display sanitized errors. Loopback is not
    authentication against other local processes; the single-user trust
-   assumption remains explicit.
+   assumption remains explicit. Document that the user must keep knowledge
+   files in an unshared local location and is responsible for other services
+   and system file sharing.
 7. Test validation boundaries, supported formats, corrupt/no-text PDFs, mixed
-   batches, duplicate names, progress, consent, safe messages, atomic rollback,
-   restart persistence, local-only access, and known-evidence retrieval. Include
+   batches, overlapping validation reasons, duplicate names, progress,
+   accessibility, consent, safe messages, atomic rollback, interruption before
+   and after commit, restart persistence, local-only access, and the specified
+   known-evidence retrieval example. Include
    an opt-in real-model test on the sample corpus; deterministic fakes alone do
    not establish real semantic retrieval quality.
 8. Document setup, model download and offline limitations, `.env.example` with

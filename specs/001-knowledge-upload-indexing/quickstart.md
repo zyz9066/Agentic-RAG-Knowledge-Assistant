@@ -39,12 +39,16 @@ CI must exercise the declared Python/platform matrix.
 3. Submit an empty file, an unsupported file, a corrupt or no-text PDF, and a
    valid file in one within-limit batch. Confirm individual errors and the valid
    file's success. Test 10 and 11 files and 10 MiB and one byte over the limit.
+   For a file violating multiple validation rules, confirm that all applicable
+   reasons are shown; an oversized batch is rejected for its count.
 4. Replace an indexed filename with different content. Verify only the new
    content is retrieved. Repeat with a deliberately failing replacement and
    verify that the previous content is still retrievable.
 5. Use the implemented local retrieval-check command against a known question.
    Verify the fact, source filename, and chunk identifier, then restart the app
-   and verify them again. Consult the command's `--help` for its arguments.
+   with the same knowledge location and compatible embedding configuration and
+   verify them again. Use the known-evidence example in [the specification](spec.md).
+   Consult the command's `--help` for the command's arguments.
 6. Confirm that external-provider tests require disclosure and new consent per
    batch and make zero document-text calls without consent. Feature 001 defaults
    to local embeddings; no production external provider is required.
@@ -52,6 +56,12 @@ CI must exercise the declared Python/platform matrix.
    knowledge-base removal procedure. Restart and confirm that the removed
    knowledge is no longer retrievable. This does not erase backups or remote
    copies.
+8. Use a keyboard and screen reader to access the upload view and identify each
+   filename's textual status and errors without relying on color.
+
+Keep the configured knowledge location on an unshared local location. The user
+is responsible for system file sharing and other services that could expose it;
+the application's local-only access restrictions do not control those services.
 
 For behavior and evidence shapes, see [the workflow contract](contracts/knowledge-workflow.md)
 and [data model](data-model.md).

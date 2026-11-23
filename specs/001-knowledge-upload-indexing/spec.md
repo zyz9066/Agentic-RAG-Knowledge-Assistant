@@ -18,6 +18,9 @@ make their contents retrievable with source metadata.
 - Q: What upload limits should the first release enforce? → A: At most 10 files per batch, each at most 10 MiB.
 - Q: How long should permission to send document text to an external indexing service last? → A: Ask for each upload batch that uses an external service.
 - Q: How should the user remove indexed knowledge from the first release? → A: Document how to remove the entire local knowledge base outside the application.
+- Q: How should the application protect the local knowledge base from access through file sharing or other services? → A: Use an unshared local location; the user is responsible for system sharing and other services.
+- Q: What accessibility requirements should apply to upload statuses and errors? → A: Require text labels, keyboard access, and screen-reader access for status and errors.
+- Q: Within a permitted-size batch, what should a file's rejection message say when it violates multiple rules? → A: Report all applicable validation reasons for each rejected file.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -62,8 +65,9 @@ content without using a question-answering interface.
    batch is submitted, **Then** both files are rejected with an explanation and
    any previously indexed document of that name remains unchanged.
 9. **Given** a successfully indexed document, **When** the application is
-   restarted in the same configured environment, **Then** its chunks remain
-   retrievable with their source metadata.
+   restarted using the same local knowledge-base location and compatible
+   embedding configuration, **Then** its chunks remain retrievable with their
+   source metadata.
 10. **Given** indexing would send document text to an external service,
     **When** the user has not explicitly opted in after being told what data
     and service are involved, **Then** no document text is sent and the user
@@ -82,8 +86,21 @@ content without using a question-answering interface.
     the documented removal procedure, **Then** the local knowledge base is
     removed and its content is no longer retrievable.
 15. **Given** the application is running on the user's computer, **When** a
-    remote computer attempts to access the upload view or knowledge base,
-    **Then** access is denied.
+    remote computer attempts to access the upload view or knowledge base
+    through the application, **Then** access is denied.
+16. **Given** per-file statuses or errors are available, **When** a user
+    operates the upload view with a keyboard and screen reader, **Then** each
+    filename and its status or error are available as text, without relying
+    on color alone.
+17. **Given** indexing is interrupted, **When** the application restarts,
+    **Then** an interruption before a document is fully committed leaves no
+    partial new chunks retrievable and preserves any previously committed
+    version. If the complete new version was committed before interruption,
+    that version remains retrievable instead.
+18. **Given** a batch within the file-count limit contains a file violating
+    multiple validation rules, **When** the batch is submitted, **Then** that
+    file is rejected with all applicable validation reasons and other valid
+    files receive independent outcomes.
 
 ### Edge Cases
 
@@ -95,8 +112,14 @@ content without using a question-answering interface.
   rejected with an explanation so that replacement order is not ambiguous.
 - A failed indexing attempt must not leave partial new chunks available for
   retrieval or remove a previously indexed version.
+- An interruption before commit leaves the previous committed document, if
+  any, available after restart; an interruption after commit leaves the
+  complete new version available, never a partial version.
 - A batch within the file-count limit may contain both valid and invalid files;
   each receives an independent final outcome.
+- Within the file-count limit, a file can violate multiple validation rules;
+  its rejection explains each applicable violation. An oversized batch is
+  rejected for its count before per-file processing.
 - Files of exactly 10 MiB and batches of exactly 10 files meet the size and
   count limits; files or batches above those limits are rejected as specified.
 
@@ -134,9 +157,13 @@ content without using a question-answering interface.
 - **FR-011**: The system MUST reject all same-named files submitted together in
   a single batch with a clear explanation.
 - **FR-012**: Successfully indexed content MUST remain retrievable after the
-  application is restarted in the same configured environment.
+  application is restarted with the same local knowledge-base location and a
+  compatible embedding configuration, provided those dependencies are available.
 - **FR-013**: The application MUST restrict access to the knowledge-upload view
-  and knowledge base to the local computer; remote access is not supported.
+  and knowledge base through the application to the local computer; remote
+  application access is not supported. The user MUST use an unshared local
+  location for knowledge files and is responsible for system sharing and other
+  services that could expose those files.
 - **FR-014**: Before document text is sent to an external indexing service, the
   user MUST be told which service receives which data and MUST explicitly opt in.
   Opt-in applies to one upload batch only and MUST be requested again for each
@@ -150,6 +177,17 @@ content without using a question-answering interface.
 - **FR-016**: Documentation MUST provide a procedure to remove the entire local
   knowledge base outside the application, including its indexed content and
   associated metadata.
+- **FR-017**: The upload view MUST be operable by keyboard. Each filename and
+  its status or error MUST be available to screen readers as associated text;
+  conveying an outcome MUST NOT rely on color alone.
+- **FR-018**: For a batch within the file-count limit, a rejected file MUST
+  report all applicable duplicate-name, empty-file, unsupported-type, and
+  file-size validation reasons. An over-limit batch MUST be rejected for its
+  file count before per-file processing.
+- **FR-019**: An interruption before a document is fully committed MUST leave
+  no partial new chunks retrievable after restart and MUST preserve any
+  previously committed version. A completed commit MUST leave the complete
+  new version retrievable after restart.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -170,8 +208,9 @@ content without using a question-answering interface.
 - **SC-002**: In a mixed-file verification batch, 100% of empty, unsupported,
   and deliberately unprocessable files are reported as failures, while each
   valid file reaches a separate successful outcome.
-- **SC-003**: For at least one known question against an indexed sample, the
-  returned evidence includes the expected fact and correct source identifiers.
+- **SC-003**: For the known-evidence example in Verification, returned evidence
+  includes the specified fact, exact source filename, and the identifier of
+  the indexed chunk containing that fact.
 - **SC-004**: In replacement checks, a successful same-name upload replaces the
   previous contents, and a failed replacement leaves the previous contents
   retrievable without exposing partial new contents.
@@ -185,6 +224,9 @@ content without using a question-answering interface.
 - A PDF must contain extractable text; extracting text from images is not required.
 - The configured knowledge base is for one user on their own computer;
   authentication and per-user access control are outside this feature.
+- The user controls the operating system and other services and keeps the
+  knowledge-base location local and unshared. Application access restrictions
+  do not control file sharing or access through those services.
 - Embedding and storage capabilities are available in the configured environment.
   Their specific providers and capacity limits are planning decisions.
 - Questions and example documents used for verification contain no private or
@@ -194,12 +236,20 @@ content without using a question-answering interface.
 
 - Automated checks cover valid, empty, unsupported, corrupt, and unprocessable
   files; chunk creation and source metadata; known-evidence retrieval; mixed
-  batches; replacement success and failure; persistence across restart; and
+  batches; replacement success, failure, and interruption before and after
+  commit; persistence across restart; and
   upload count and size boundaries. Check local-only access, external-service
-  disclosure and per-batch opt-in, and documented knowledge-base removal.
+  disclosure and per-batch opt-in, documented knowledge-base removal, and
+  keyboard and screen-reader access to per-file statuses and errors. Cover
+  files with overlapping validation violations and over-limit batch precedence.
 - Use deterministic embedding and storage substitutes where appropriate so
   routine tests do not require live providers. Verify persistence behavior using
   a suitable local test environment.
+- Known-evidence example: index an original text file named `observatory.txt`
+  containing only `The observatory is located in Larch Valley.` Ask `Where is
+  the observatory located?` The returned evidence must contain that sentence,
+  identify `observatory.txt`, and identify its indexed chunk. This is a minimum
+  acceptance example, not a claim about retrieval quality on other questions.
 - Manual walkthrough: start the application; submit a valid text file, a valid
   PDF, an empty file, and an unsupported file; observe each filename and outcome;
   then repeat an upload with the same filename and verify the replacement outcome.

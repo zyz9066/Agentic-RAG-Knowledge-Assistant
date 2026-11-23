@@ -9,6 +9,9 @@ types are design targets for implementation, not existing code.
 - An oversized batch is rejected as a whole; each entry is reported as rejected.
 - A within-limit batch returns exactly one outcome per input, in submission order.
   Duplicate filenames within the batch are all rejected; other entries proceed.
+- Each rejected file in a within-limit batch reports all applicable duplicate,
+  empty-file, unsupported-type, and size validation reasons. Over-limit batches
+  are rejected for count before per-file processing.
 - Filenames compare exactly, including case and extension. Treat filenames as
   untrusted labels, never as filesystem paths.
 - Lifecycle: `pending` -> `validating` -> `processing` -> `indexed` or `failed`;
@@ -16,6 +19,8 @@ types are design targets for implementation, not existing code.
 - A `failed` or `rejected` result contains a safe, actionable error category and
   message, never raw document text, credentials, or internal exception details.
   Errors in one file do not stop the rest of a valid-size batch.
+- The upload view is keyboard-operable; each filename is associated with its
+  status or error as text accessible to screen readers, without color alone.
 - Indexing and replacement become visible to retrieval only after a complete
   commit. A failed replacement leaves the previously committed document intact.
 
@@ -49,6 +54,13 @@ types are design targets for implementation, not existing code.
   preserve both content and provenance.
 - An indexing failure before commit leaves previously committed data untouched;
   transaction rollback and restart recovery must not expose partial new chunks.
+  After an interruption before commit, the prior version remains available if
+  present; after a completed commit, the complete new version remains available.
+- Restart persistence assumes the same local knowledge-base location and a
+  compatible, available embedding configuration.
+- The user keeps the knowledge location local and unshared and is responsible
+  for system file sharing and other services; application access restrictions
+  do not control those services.
 - A documented local cleanup removes all project-owned persistent knowledge data
   and associated metadata after the app is stopped. It does not claim to remove
   data previously sent to an external provider.

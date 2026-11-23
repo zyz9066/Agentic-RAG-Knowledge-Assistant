@@ -10,67 +10,75 @@
 
 ## Requirement Completeness
 
-- [ ] CHK001 Are required and optional file formats and their content restrictions clearly distinguished? [Completeness, Spec §FR-001, Spec §Edge Cases]
-- [ ] CHK002 Are the required per-file processing states and final outcomes defined well enough to distinguish progress, success, rejection, and failure? [Completeness, Spec §FR-002]
-- [ ] CHK003 Are requirements for extracted text, chunk content, source filename, and chunk identifier sufficient to support later retrieval and citation? [Completeness, Spec §FR-004, Spec §FR-005, Spec §FR-006]
-- [ ] CHK004 Are requirements for a retrievable evidence result, including the evidence content and source identifiers, adequately specified for the next feature? [Completeness, Spec §FR-006]
-- [ ] CHK005 Are required user-facing explanations specified for validation, parsing, embedding, and storage failures without disclosing sensitive information? [Completeness, Spec §FR-003, Spec §FR-007]
-- [ ] CHK006 Is the scope of local knowledge-base removal defined to include indexed content and associated metadata? [Completeness, Spec §FR-016]
+- [x] CHK001 Are required and optional file formats and their content restrictions clearly distinguished? [Completeness, Spec §FR-001, Spec §Edge Cases]
+- [x] CHK002 Are the required per-file processing states and final outcomes defined well enough to distinguish progress, success, rejection, and failure? [Completeness, Spec §FR-002]
+- [x] CHK003 Are requirements for extracted text, chunk content, source filename, and chunk identifier sufficient to support later retrieval and citation? [Completeness, Spec §FR-004, Spec §FR-005, Spec §FR-006]
+- [x] CHK004 Are requirements for a retrievable evidence result, including the evidence content and source identifiers, adequately specified for the next feature? [Completeness, Spec §FR-006]
+- [x] CHK005 Are required user-facing explanations specified for validation, parsing, embedding, and storage failures without disclosing sensitive information? [Completeness, Spec §FR-003, Spec §FR-007]
+- [x] CHK006 Is the scope of local knowledge-base removal defined to include indexed content and associated metadata? [Completeness, Spec §FR-016]
 
 ## Requirement Clarity
 
-- [ ] CHK007 Are empty, unreadable, unsupported, and non-extractable inputs distinguished clearly enough to determine their outcomes? [Clarity, Spec §FR-003, Spec §FR-007, Spec §Edge Cases]
-- [ ] CHK008 Are filename identity and duplicate detection rules explicit about case, extension, and the complete displayed filename? [Clarity, Spec §FR-009, Spec §FR-011, Spec §Assumptions]
-- [ ] CHK009 Is the start and end of an upload batch defined clearly enough to determine which files and consent belong together? [Ambiguity, Spec §FR-014, Spec §FR-015]
-- [ ] CHK010 Are "clear" progress, success, and failure messages described with enough objective content to distinguish their meanings? [Ambiguity, Spec §FR-002, Spec §FR-007]
-- [ ] CHK011 Is "relevant evidence" defined sufficiently to judge whether a known-question retrieval outcome meets the requirement? [Ambiguity, Spec §FR-006, Spec §SC-003]
-- [ ] CHK012 Is "same configured environment" sufficiently defined to determine the persistence expectation after restart? [Ambiguity, Spec §FR-012]
+- [x] CHK007 Are empty, unreadable, unsupported, and non-extractable inputs distinguished clearly enough to determine their outcomes? [Clarity, Spec §FR-003, Spec §FR-007, Spec §Edge Cases]
+- [x] CHK008 Are filename identity and duplicate detection rules explicit about case, extension, and the complete displayed filename? [Clarity, Spec §FR-009, Spec §FR-011, Spec §Assumptions]
+- [x] CHK009 Is the start and end of an upload batch defined clearly enough to determine which files and consent belong together? [Ambiguity, Spec §FR-014, Spec §FR-015]
+- [x] CHK010 Are "clear" progress, success, and failure messages described with enough objective content to distinguish their meanings? [Ambiguity, Spec §FR-002, Spec §FR-007]
+- [x] CHK011 Is "relevant evidence" defined sufficiently to judge whether a known-question retrieval outcome meets the requirement? [Ambiguity, Spec §FR-006, Spec §SC-003]
+  - Resolution: The known-evidence example specifies the question, expected sentence, and source; it does not claim general retrieval quality.
+- [x] CHK012 Is "same configured environment" sufficiently defined to determine the persistence expectation after restart? [Ambiguity, Spec §FR-012]
+  - Resolution: FR-012 identifies the same knowledge location and a compatible, available embedding configuration.
 
 ## Requirement Consistency
 
-- [ ] CHK013 Do the rules for oversized batches, same-named files, and per-file independence define a consistent precedence when conditions overlap? [Consistency, Spec §FR-008, Spec §FR-011, Spec §FR-015]
-- [ ] CHK014 Are successful and failed same-name replacement requirements consistent with the prohibition on publishing partial results? [Consistency, Spec §FR-009, Spec §FR-010]
-- [ ] CHK015 Are per-batch external-processing consent requirements consistent between the specification and the planned local-only default? [Consistency, Spec §FR-014, Plan §Design and Verification]
-- [ ] CHK016 Are the local access requirement and the single-user trust assumption consistent about the boundary and any excluded local threats? [Consistency, Spec §FR-013, Spec §Assumptions, Plan §Design and Verification]
-- [ ] CHK017 Are the feature's evidence and provenance requirements consistent with the later answer-generation scope without introducing a question-answering UI now? [Consistency, Spec §FR-005, Spec §FR-006, Spec §Out of Scope]
+- [x] CHK013 Do the rules for oversized batches, same-named files, and per-file independence define a consistent precedence when conditions overlap? [Consistency, Spec §FR-008, Spec §FR-011, Spec §FR-015]
+  - Resolution: FR-018 specifies count-first batch rejection and all applicable per-file validation reasons within the limit.
+- [x] CHK014 Are successful and failed same-name replacement requirements consistent with the prohibition on publishing partial results? [Consistency, Spec §FR-009, Spec §FR-010]
+- [x] CHK015 Are per-batch external-processing consent requirements consistent between the specification and the planned local-only default? [Consistency, Spec §FR-014, Plan §Design and Verification]
+- [x] CHK016 Are the local access requirement and the single-user trust assumption consistent about the boundary and any excluded local threats? [Consistency, Spec §FR-013, Spec §Assumptions, Plan §Design and Verification]
+  - Resolution: FR-013 and the assumptions distinguish application access from user-managed system sharing and other services.
+- [x] CHK017 Are the feature's evidence and provenance requirements consistent with the later answer-generation scope without introducing a question-answering UI now? [Consistency, Spec §FR-005, Spec §FR-006, Spec §Out of Scope]
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK018 Are the file-count and file-size thresholds, units, inclusive boundaries, and resulting batch versus per-file outcomes objectively specified? [Measurability, Spec §FR-015, Spec §Edge Cases]
-- [ ] CHK019 Do the success criteria define observable evidence for successful indexing of both required formats, including provenance? [Acceptance Criteria, Spec §SC-001]
-- [ ] CHK020 Do the mixed-batch criteria distinguish each invalid outcome from every valid file's independent outcome? [Acceptance Criteria, Spec §SC-002, Spec §SC-005]
-- [ ] CHK021 Are the expected fact and correct source identifiers sufficiently specified to make the retrieval criterion objectively assessable? [Measurability, Spec §SC-003]
-- [ ] CHK022 Do replacement criteria distinguish old and new content and define what must remain available after failure? [Acceptance Criteria, Spec §SC-004, Spec §FR-009, Spec §FR-010]
+- [x] CHK018 Are the file-count and file-size thresholds, units, inclusive boundaries, and resulting batch versus per-file outcomes objectively specified? [Measurability, Spec §FR-015, Spec §Edge Cases]
+- [x] CHK019 Do the success criteria define observable evidence for successful indexing of both required formats, including provenance? [Acceptance Criteria, Spec §SC-001]
+- [x] CHK020 Do the mixed-batch criteria distinguish each invalid outcome from every valid file's independent outcome? [Acceptance Criteria, Spec §SC-002, Spec §SC-005]
+- [x] CHK021 Are the expected fact and correct source identifiers sufficiently specified to make the retrieval criterion objectively assessable? [Measurability, Spec §SC-003]
+  - Resolution: SC-003 and Verification specify the sample sentence, filename, and identifier of the indexed chunk containing it.
+- [x] CHK022 Do replacement criteria distinguish old and new content and define what must remain available after failure? [Acceptance Criteria, Spec §SC-004, Spec §FR-009, Spec §FR-010]
 
 ## Scenario Coverage
 
-- [ ] CHK023 Are primary and alternate outcomes specified for individual files and mixed batches, including required format restrictions? [Coverage, Spec §User Story 1, Spec §Edge Cases]
-- [ ] CHK024 Are validation, extraction, embedding, and storage exception scenarios each addressed with per-file outcomes? [Coverage, Spec §FR-003, Spec §FR-007]
-- [ ] CHK025 Are successful replacement, failed replacement, and subsequent retrieval requirements specified for previously indexed knowledge? [Recovery, Spec §FR-009, Spec §FR-010]
-- [ ] CHK026 Are interrupted processing or application termination scenarios addressed for both a new document and an existing document being replaced? [Recovery, Gap, Spec §FR-010, Spec §FR-012]
-- [ ] CHK027 Are disclosure, explicit opt-in, refusal, and renewed consent for each later external-processing batch addressed? [Coverage, Spec §FR-014]
-- [ ] CHK028 Are restart persistence and complete knowledge-base removal described as distinct lifecycle scenarios? [Coverage, Spec §FR-012, Spec §FR-016]
+- [x] CHK023 Are primary and alternate outcomes specified for individual files and mixed batches, including required format restrictions? [Coverage, Spec §User Story 1, Spec §Edge Cases]
+- [x] CHK024 Are validation, extraction, embedding, and storage exception scenarios each addressed with per-file outcomes? [Coverage, Spec §FR-003, Spec §FR-007]
+- [x] CHK025 Are successful replacement, failed replacement, and subsequent retrieval requirements specified for previously indexed knowledge? [Recovery, Spec §FR-009, Spec §FR-010]
+- [x] CHK026 Are interrupted processing or application termination scenarios addressed for both a new document and an existing document being replaced? [Recovery, Gap, Spec §FR-010, Spec §FR-012]
+  - Resolution: FR-019 and scenario 17 state the before-commit and after-commit outcomes.
+- [x] CHK027 Are disclosure, explicit opt-in, refusal, and renewed consent for each later external-processing batch addressed? [Coverage, Spec §FR-014]
+- [x] CHK028 Are restart persistence and complete knowledge-base removal described as distinct lifecycle scenarios? [Coverage, Spec §FR-012, Spec §FR-016]
 
 ## Edge Case Coverage
 
-- [ ] CHK029 Are exact-limit and over-limit cases addressed for both batch count and individual file size, including mixed valid and oversized files? [Coverage, Spec §FR-015, Spec §Edge Cases]
-- [ ] CHK030 Are all duplicates in the same batch addressed, including their effect on a previously indexed document of that name? [Coverage, Spec §FR-011, Spec §User Story 1]
-- [ ] CHK031 Are requirements for corrupt, encrypted, image-only, incompatible, and empty extracted content, including content exceeding an embedding context limit, sufficient to prevent false success or silently omitted evidence? [Coverage, Gap, Spec §FR-004, Spec §FR-007, Plan §Design and Verification]
+- [x] CHK029 Are exact-limit and over-limit cases addressed for both batch count and individual file size, including mixed valid and oversized files? [Coverage, Spec §FR-015, Spec §Edge Cases]
+- [x] CHK030 Are all duplicates in the same batch addressed, including their effect on a previously indexed document of that name? [Coverage, Spec §FR-011, Spec §User Story 1]
+- [x] CHK031 Are requirements for corrupt, encrypted, image-only, incompatible, and empty extracted content, including content exceeding an embedding context limit, sufficient to prevent false success or silently omitted evidence? [Coverage, Gap, Spec §FR-004, Spec §FR-007, Plan §Design and Verification]
 
 ## Non-Functional Requirements
 
-- [ ] CHK032 Is the local-only access boundary stated for both the upload view and knowledge base, with relevant assumptions and exclusions explicit? [Security, Spec §FR-013, Spec §Assumptions]
-- [ ] CHK033 Are the external service and data to be disclosed, timing of consent, and behavior without consent specified without ambiguity? [Privacy, Spec §FR-014]
-- [ ] CHK034 Are requirements for safe errors and diagnostic information clear about excluding credentials, sensitive content, and internal details? [Privacy, Spec §FR-007, Constitution §II]
-- [ ] CHK035 Are accessibility requirements for identifying per-file status and errors specified or explicitly deferred? [Accessibility, Gap, Spec §FR-002, Spec §FR-007]
-- [ ] CHK036 Are performance expectations and the absence of a latency target explicitly documented without implying an unmeasured guarantee? [Clarity, Plan §Technical Context]
+- [x] CHK032 Is the local-only access boundary stated for both the upload view and knowledge base, with relevant assumptions and exclusions explicit? [Security, Spec §FR-013, Spec §Assumptions]
+  - Resolution: The user is responsible for keeping the local knowledge location unshared and managing other services.
+- [x] CHK033 Are the external service and data to be disclosed, timing of consent, and behavior without consent specified without ambiguity? [Privacy, Spec §FR-014]
+- [x] CHK034 Are requirements for safe errors and diagnostic information clear about excluding credentials, sensitive content, and internal details? [Privacy, Spec §FR-007, Constitution §II]
+- [x] CHK035 Are accessibility requirements for identifying per-file status and errors specified or explicitly deferred? [Accessibility, Gap, Spec §FR-002, Spec §FR-007]
+  - Resolution: FR-017 requires keyboard access and associated text readable by screen readers without relying on color.
+- [x] CHK036 Are performance expectations and the absence of a latency target explicitly documented without implying an unmeasured guarantee? [Clarity, Plan §Technical Context]
 
 ## Dependencies and Assumptions
 
-- [ ] CHK037 Are embedding availability, first-use network requirements, and limitations on sending document text documented consistently? [Dependency, Spec §Assumptions, Plan §Design and Verification]
-- [ ] CHK038 Are the implications of changing embedding identity or model compatibility for existing indexed knowledge explicitly addressed? [Dependency, Gap, Plan §Design and Verification]
-- [ ] CHK039 Are supported language and retrieval-quality assumptions stated without implying broader measured quality? [Assumption, Spec §SC-003, Plan §Design and Verification]
-- [ ] CHK040 Are the scope and limitations of deterministic substitutes versus real retrieval-quality evidence clearly distinguished? [Assumption, Spec §Verification, Plan §Design and Verification]
+- [x] CHK037 Are embedding availability, first-use network requirements, and limitations on sending document text documented consistently? [Dependency, Spec §Assumptions, Plan §Design and Verification]
+- [x] CHK038 Are the implications of changing embedding identity or model compatibility for existing indexed knowledge explicitly addressed? [Dependency, Gap, Plan §Design and Verification]
+- [x] CHK039 Are supported language and retrieval-quality assumptions stated without implying broader measured quality? [Assumption, Spec §SC-003, Plan §Design and Verification]
+- [x] CHK040 Are the scope and limitations of deterministic substitutes versus real retrieval-quality evidence clearly distinguished? [Assumption, Spec §Verification, Plan §Design and Verification]
 
 ## Notes
 
