@@ -103,18 +103,23 @@
   - Review: FR-023 specifies rejection, a safe retry message, and independent outcomes for other eligible filenames.
 - [x] CHK038 Are release and retry requirements clear for successful, failed, and interrupted attempts, including the treatment of previously committed evidence? [Recovery, Spec §FR-019, Spec §FR-023, Contract §Persistence]
   - Review: FR-019, FR-023, and the contract define retry availability and committed-data preservation around completion and interruption.
-- [ ] CHK039 Are the per-file outcome and status transition for an unexpected reservation error specified consistently with the other failure requirements? [Consistency, Gap, Spec §FR-007, Contract §Upload submission]
+- [x] CHK039 Are the per-file outcome and status transition for an unexpected reservation error specified consistently with the other failure requirements? [Consistency, Gap, Spec §FR-007, Contract §Upload submission]
   - Review: The contract specifies a failed outcome, but its lifecycle does not specify the transition when reservation fails before processing.
+  - Resolution: FR-024 and the upload contract specify the validating-to-failed transition, safe explanation, and preservation of committed knowledge.
 
 ## Observability Requirements
 
-- [ ] CHK040 Are meaningful ingestion and retrieval workflow steps identified for tracing, including the boundaries of this feature? [Completeness, Gap, Constitution §V, Plan §Constitution Check]
+- [x] CHK040 Are meaningful ingestion and retrieval workflow steps identified for tracing, including the boundaries of this feature? [Completeness, Gap, Constitution §V, Plan §Constitution Check]
   - Review: The constitution requires workflow traces, but the feature plan does not identify the in-scope ingestion and retrieval trace steps.
-- [ ] CHK041 Are trace status and latency requirements, and model or usage details when available, specified for the in-scope workflow steps? [Completeness, Gap, Constitution §V]
+  - Resolution: FR-025 identifies the entered ingestion and retrieval steps; end-to-end question-answer tracing is outside this feature.
+- [x] CHK041 Are trace status and latency requirements, and model or usage details when available, specified for the in-scope workflow steps? [Completeness, Gap, Constitution §V]
   - Review: The constitution specifies these attributes generally; the feature artifacts do not apply them to identified workflow steps.
+  - Resolution: FR-025 requires operation and entered-step outcomes and non-negative durations, plus model and usage details when available.
 - [x] CHK042 Are requirements for sensitive-data minimization in traces and diagnostics consistent with safe per-file errors and external-service consent? [Consistency, Constitution §II, Constitution §V, Spec §FR-007, Spec §FR-014]
   - Review: The constitution requires secret exclusion and sensitive-data minimization, consistent with the safe-error and consent rules.
-- [ ] CHK043 Are observability failure handling and deterministic testability requirements defined without obscuring application failures or breaking core workflows? [Coverage, Gap, Constitution §IV, Constitution §V, Plan §Design and Verification]
+- [x] CHK043 Are observability failure handling and deterministic testability requirements defined without obscuring application failures or breaking core workflows? [Coverage, Gap, Constitution §IV, Constitution §V, Plan §Design and Verification]
   - Review: The constitution sets general principles, but feature-specific handling of observability failures and offline verification are not defined.
-- [ ] CHK044 Are the expected trace evidence and privacy constraints sufficiently specific for objective acceptance without requiring a live observability service? [Measurability, Gap, Constitution §IV, Constitution §V, Spec §Verification]
+  - Resolution: FR-027 preserves core outcomes and errors while reporting safe warnings; Verification specifies a recording substitute and injected failures.
+- [x] CHK044 Are the expected trace evidence and privacy constraints sufficiently specific for objective acceptance without requiring a live observability service? [Measurability, Gap, Constitution §IV, Constitution §V, Spec §Verification]
   - Review: The feature verification requirements do not identify expected trace evidence or an offline privacy check.
+  - Resolution: FR-025, FR-026, SC-006, and Verification specify trace evidence and prohibited fields, with offline sentinel checks.
