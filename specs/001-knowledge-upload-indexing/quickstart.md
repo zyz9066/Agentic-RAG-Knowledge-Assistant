@@ -49,7 +49,10 @@ CI must exercise the declared Python/platform matrix.
    including an encrypted PDF that opens without a password.
 4. Replace an indexed filename with different content. Verify only the new
    content is retrieved. Repeat with a deliberately failing replacement and
-   verify that the previous content is still retrievable.
+   verify that the previous content is still retrievable. While one attempt is
+   in progress, submit the same filename from another session or process;
+   verify rejection with a retry message, then retry after the first finishes.
+   Confirm unrelated eligible files in the later batch still proceed.
 5. Use the implemented local retrieval-check command against a known question.
    Verify the fact, source filename, and chunk identifier, then restart the app
    with the same knowledge location and compatible embedding configuration and

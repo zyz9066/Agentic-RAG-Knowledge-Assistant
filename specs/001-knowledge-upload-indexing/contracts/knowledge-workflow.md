@@ -5,9 +5,10 @@ types are design targets for implementation, not existing code.
 
 ## Upload submission
 
-- Input: a submission of `(filename, bytes)` entries. A processable batch has
-  one to ten files, each at most 10 MiB; over-limit inputs still receive the
-  specified rejection outcomes.
+- Input: a submission of `(filename, bytes)` entries. A batch of one to ten
+  files is evaluated per file: reject each file over 10 MiB and process other
+  eligible files independently. Inputs exceeding either limit still receive
+  the specified rejection outcomes.
 - An oversized batch is rejected as a whole; each entry is reported as rejected.
 - Every submitted entry has a distinct outcome in submission order, including
   same-named entries in an oversized batch. Duplicate filenames within a
@@ -24,11 +25,20 @@ types are design targets for implementation, not existing code.
   retrieval quality in other languages.
 - Filenames compare exactly, including case and extension. Treat filenames as
   untrusted labels, never as filesystem paths.
+- After batch and per-file validation, reserve the exact filename for the
+  indexing attempt in that knowledge base. The first attempt to acquire the
+  reservation proceeds; a concurrent attempt from any session or application
+  process is rejected with a safe retry message. Other eligible filenames
+  proceed independently. Same-batch duplicate and validation rules still apply.
+- Hold the reservation throughout processing and commit, and release it after
+  success or failure; interruption must also make it available for retry. A
+  rejected overlap never changes previously committed knowledge.
 - Lifecycle: `pending` -> `validating` -> `processing` -> `indexed` or `failed`;
-  validation rejection transitions to `rejected`. Undecodable text, marker-only
-  text, and encrypted PDFs are rejected during validation; corrupt parsing,
-  no-text PDF extraction, embedding, and storage errors fail during processing.
-  Each entered stage is visible.
+  validation or conflicting-reservation rejection transitions to `rejected`.
+  Undecodable text, marker-only text, and encrypted PDFs are rejected during
+  validation; corrupt parsing, no-text PDF extraction, embedding, and storage
+  errors fail during processing. A reservation error other than a conflicting
+  reservation produces a safe `failed` result. Each entered stage is visible.
 - A `failed` or `rejected` result contains a safe, actionable error category and
   message, never raw document text, credentials, or internal exception details.
   Errors in one file do not stop the rest of a valid-size batch.
@@ -74,6 +84,10 @@ types are design targets for implementation, not existing code.
 - Repository methods provide an atomic replacement of one filename and its
   complete chunk set, and read only committed records. Reads after restart
   preserve both content and provenance.
+- Filename reservations coordinate all sessions and application processes
+  using the same knowledge base, including concurrent threads, and must not
+  permanently block retries after a process interruption. Reservation errors
+  are surfaced safely, not treated as successful indexing.
 - An indexing failure before commit leaves previously committed data untouched;
   transaction rollback and restart recovery must not expose partial new chunks.
   After an interruption before commit, the prior version remains available if

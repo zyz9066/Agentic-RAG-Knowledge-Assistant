@@ -28,6 +28,7 @@ make their contents retrievable with source metadata.
 - Q: How should a UTF-8 text file with an initial byte-order mark be handled? → A: Accept UTF-8 with or without an initial marker and remove that initial marker before indexing.
 - Q: What final status should be shown for undecodable text and encrypted PDFs? → A: Mark both as rejected; mark parsing, embedding, and storage errors as failed.
 - Q: How should retrieval handle a question containing only whitespace? → A: Reject empty or whitespace-only questions with an explicit input error.
+- Q: What should happen when two submissions try to index the same filename at the same time? → A: Reject the later same-name attempt while the first is in progress, with a clear message to retry.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -136,6 +137,13 @@ content without using a question-answering interface.
     and the system does not silently substitute another provider.
 26. **Given** a non-positive retrieval result limit, **When** evidence is
     requested, **Then** retrieval reports an explicit input error.
+27. **Given** a file is already being indexed, **When** another submission
+    attempts to index the same exact filename in the same knowledge base,
+    **Then** the later file is rejected with a clear retry message, other
+    eligible files in its batch proceed independently, and no existing
+    committed version is changed by the rejected attempt.
+    **When** the first attempt finishes or is interrupted, **Then** a later
+    submission can retry that filename.
 
 ### Edge Cases
 
@@ -150,6 +158,9 @@ content without using a question-answering interface.
   and fails rather than being marked as indexed.
 - If two files with the same filename are submitted in one batch, both are
   rejected with an explanation so that replacement order is not ambiguous.
+- Overlapping submissions to the same knowledge base cannot index the same
+  exact filename simultaneously, even if they originate from separate sessions
+  or application processes. A rejected overlap does not alter committed data.
 - A failed indexing attempt must not leave partial new chunks available for
   retrieval or remove a previously indexed version.
 - An interruption before commit leaves the previous committed document, if
@@ -252,6 +263,16 @@ content without using a question-answering interface.
   otherwise valid file solely because its content is in another language.
 - **FR-022**: The system MUST reject encrypted PDFs, including those that open
   without a password, with a clear per-file explanation.
+- **FR-023**: For a knowledge base, the system MUST allow at most one indexing
+  attempt for an exact filename to proceed at a time across sessions and
+  application processes. After batch and per-file validation, it MUST reject a
+  conflicting attempt with a safe message to retry, without changing committed
+  knowledge or blocking other eligible filenames in the batch. When attempts
+  reach this point concurrently, the first to reserve the filename proceeds;
+  submission order is not guaranteed.
+  The filename becomes available for retry when the active attempt completes,
+  fails, or is interrupted. Same-batch duplicate and other validation rules
+  continue to apply.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -316,7 +337,10 @@ content without using a question-answering interface.
   retrieval without treating returned candidates as proof of relevance. Cover
   empty and whitespace-only questions, non-positive result limits, a missing
   provider, duplicate entries in oversized batches, and UTF-8 files with and
-  without an initial marker and marker-only files.
+  without an initial marker and marker-only files. Exercise overlapping
+  same-name submissions across sessions and processes, independently
+  progressing other filenames, preservation of committed evidence, and retry
+  after completion, failure, and interruption.
 - Use deterministic embedding and storage substitutes where appropriate so
   routine tests do not require live providers. Verify persistence behavior using
   a suitable local test environment.

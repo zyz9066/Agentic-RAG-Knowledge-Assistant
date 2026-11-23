@@ -11,7 +11,9 @@ pipeline. Parse text and PDF, chunk extracted text, embed locally with FastEmbed
 and persist chunk text, provenance, and vectors together in SQLite. Rank stored
 vectors by cosine similarity through a small retrieval interface. Commit each
 document replacement in one SQLite transaction so a failed upload cannot hide
-or partially replace previously indexed knowledge.
+or partially replace previously indexed knowledge. Reserve each exact filename
+across sessions and processes for the duration of its indexing attempt; reject
+overlaps with a retry message.
 
 ## Technical Context
 
@@ -129,8 +131,14 @@ only during implementation.
    multilingual retrieval quality; do not reject otherwise valid files solely
    because their content is in another language.
 4. Compute all new chunks and vectors before opening a short SQLite write
-   transaction. In the transaction, replace a filename's document and all
-   chunks together, then commit. Roll back on failure. Validate vector
+   transaction. First acquire a non-waiting, per-knowledge-base and exact-filename
+   reservation shared across threads and processes; reject a conflicting attempt
+   with a safe retry message while other eligible filenames proceed. Keep the
+   reservation through commit or failure and use crash-safe release so an
+   interrupted process cannot permanently block retry. Treat reservation errors
+   as failures rather than silently proceeding. In the transaction, replace a
+   filename's document and all chunks together, then commit. Roll back on
+   failure. Validate vector
    dimensions, embedding identity, and finite nonzero vectors; reject
    incompatible or invalid embeddings instead of returning misleading results.
    Rank by descending cosine similarity without relevance filtering or a
@@ -157,6 +165,9 @@ only during implementation.
    not establish real semantic retrieval quality. Include over-limit duplicate
    entries, missing providers, empty or whitespace-only questions, invalid result
    limits or embeddings, cosine ranking, and UTF-8 markers.
+   Include concurrent same-name attempts across sessions and processes, mixed
+   batches, committed-data preservation, and retries after success, failure,
+   and process interruption; verify different filenames can proceed.
 8. Document setup, model download and offline limitations, `.env.example` with
    variable names only if external credentials are introduced later, local data
    removal, manual checks, and operational errors. Never commit secrets, local

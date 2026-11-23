@@ -40,6 +40,12 @@ stored as standing permission.
 
 - Parse, chunk, and embed a candidate fully before opening the replacement write
   transaction. Invalid input or provider failures leave committed data unchanged.
+- After validation, reserve the exact filename per knowledge base before
+  processing; coordinate threads, sessions, and application processes. Reject
+  overlapping attempts with a retry message, without blocking other filenames.
+  Hold the reservation until completion or failure and release it on process
+  interruption, so retries are not permanently blocked. Reservation errors
+  must not permit unprotected indexing.
 - In one transaction delete or replace the old document and chunks and write the
   complete candidate; commit once. Roll back on any write error. Queries read
   committed records only, including after process restart.

@@ -11,21 +11,26 @@
 ## Requirement Completeness
 
 - [x] CHK001 Are upload input and output requirements defined for accepted, rejected, and failed submissions, including a distinct outcome for each submitted entry? [Completeness, Contract §Upload submission, Spec §FR-002]
-- [ ] CHK002 Are outcome identity and ordering requirements sufficient to distinguish same-named entries in one batch? [Completeness, Contract §Upload submission, Spec §FR-011]
+- [x] CHK002 Are outcome identity and ordering requirements sufficient to distinguish same-named entries in one batch? [Completeness, Contract §Upload submission, Spec §FR-011]
   - Review: Submission-order results are specified for within-limit batches, but an over-limit batch has no corresponding ordering or entry identifier requirement.
-- [ ] CHK003 Are retrieval input constraints, evidence fields, and empty-result conditions documented for downstream consumers? [Completeness, Contract §Retrieval, Spec §FR-006]
+  - Resolution: The updated contract and FR-002 require distinct outcomes in submission order even for over-limit batches.
+- [x] CHK003 Are retrieval input constraints, evidence fields, and empty-result conditions documented for downstream consumers? [Completeness, Contract §Retrieval, Spec §FR-006]
   - Review: An empty index returns no evidence, but the contract does not define whether an occupied index can produce an empty result for an unrelated question.
+  - Resolution: The updated retrieval contract specifies invalid inputs, empty-index results, and the number of unfiltered candidates for a non-empty index.
 - [x] CHK004 Are requirements for invalid inputs and provider or storage failures distinguished from a valid empty retrieval result? [Completeness, Contract §Retrieval]
 
 ## Requirement Clarity
 
 - [ ] CHK005 Is the meaning of the upload contract's input limits clear for over-limit submissions that must receive rejection outcomes? [Ambiguity, Contract §Upload submission, Spec §FR-015]
   - Review: The input is described as limited to ten files of at most 10 MiB, although the contract must also accept over-limit submissions for rejection.
-- [ ] CHK006 Are the allowed per-file status transitions and final states clear for validation, decoding, extraction, and storage failures? [Clarity, Contract §Upload submission, Spec §FR-007, Spec §FR-020]
+  - Current review: Over-limit submissions are now accepted for rejection, but calling a batch processable only when every file is within the size limit conflicts with independent processing of other files in a mixed-size batch.
+- [x] CHK006 Are the allowed per-file status transitions and final states clear for validation, decoding, extraction, and storage failures? [Clarity, Contract §Upload submission, Spec §FR-007, Spec §FR-020]
   - Review: The lifecycle distinguishes validation rejection from processing failure, but does not assign undecodable text or encrypted PDF failures to either stage and final state.
+  - Resolution: The contract assigns these input cases to rejection and extraction and storage failures to processing failure.
 - [x] CHK007 Are the criteria for exact filename comparison clear about case, extension, and the complete displayed filename? [Clarity, Contract §Upload submission, Spec §Assumptions]
-- [ ] CHK008 Are the meaning and expected interpretation of retrieval ranking and similarity scores documented sufficiently for downstream consumers? [Clarity, Gap, Contract §Retrieval]
+- [x] CHK008 Are the meaning and expected interpretation of retrieval ranking and similarity scores documented sufficiently for downstream consumers? [Clarity, Gap, Contract §Retrieval]
   - Review: The plan selects cosine similarity, but the contract does not state score interpretation, ordering direction, or tie behavior.
+  - Resolution: The contract defines cosine scores, descending order, unspecified tie order, and the absence of a calibrated relevance probability.
 - [x] CHK009 Is the relationship between returned chunk identifiers and source documents sufficiently specific to identify the evidence for later citation? [Clarity, Contract §Retrieval, Spec §FR-005]
 
 ## Requirement Consistency
@@ -45,14 +50,17 @@
 
 ## Scenario and Edge Case Coverage
 
-- [ ] CHK019 Are empty and whitespace-only questions, non-positive result limits, and an empty index addressed or explicitly excluded in retrieval requirements? [Coverage, Gap, Contract §Retrieval]
+- [x] CHK019 Are empty and whitespace-only questions, non-positive result limits, and an empty index addressed or explicitly excluded in retrieval requirements? [Coverage, Gap, Contract §Retrieval]
   - Review: Empty questions, result limits, and an empty index are addressed, but whitespace-only questions are not explicitly classified.
-- [ ] CHK020 Are a missing or changed provider, refusal of consent, and a new submission after consent covered by the authorization requirements? [Coverage, Gap, Contract §External processing authorization]
+  - Resolution: The contract requires at least one non-whitespace character and specifies errors for invalid inputs and empty results for an empty index.
+- [x] CHK020 Are a missing or changed provider, refusal of consent, and a new submission after consent covered by the authorization requirements? [Coverage, Gap, Contract §External processing authorization]
   - Review: Refusal, a changed provider, and subsequent submissions are covered; the outcome for a missing provider configuration is not explicit.
+  - Resolution: The contract specifies a safe failure for affected eligible files when the configured provider is missing or unavailable.
 - [x] CHK021 Are interrupted new indexing and replacement addressed on both sides of the commit boundary without exposing partial evidence? [Recovery, Contract §Persistence, Spec §FR-019]
 - [x] CHK022 Are mixed batches containing undecodable text, encrypted PDFs, and otherwise valid files covered with independent outcomes? [Coverage, Gap, Spec §FR-008, Spec §FR-020, Spec §FR-022]
-- [ ] CHK023 Are UTF-8 boundary cases such as a byte-order mark and undecodable byte sequences specified or intentionally left to the text-format definition? [Edge Case, Gap, Spec §FR-020]
+- [x] CHK023 Are UTF-8 boundary cases such as a byte-order mark and undecodable byte sequences specified or intentionally left to the text-format definition? [Edge Case, Gap, Spec §FR-020]
   - Review: Undecodable bytes are addressed, but handling of a UTF-8 byte-order mark is not specified or explicitly deferred.
+  - Resolution: FR-020 and the contract specify removal of an initial marker and rejection of marker-only and undecodable files.
 - [x] CHK024 Are no-text, corrupt, and encrypted PDF cases distinguished sufficiently to determine their respective outcomes? [Edge Case, Spec §Edge Cases, Spec §FR-022]
 
 ## Non-Functional Requirements
@@ -76,3 +84,7 @@
 - `/speckit-implement` reads checklist checkbox state as a gate and must not modify markers.
 - `checklists/requirements.md` has a separate built-in lifecycle maintained by `/speckit-specify` and `/speckit-clarify`.
 - Add review findings inline and link to relevant requirements or decisions.
+
+## Additional Scenario Coverage
+
+- [ ] CHK033 Are requirements for overlapping submissions replacing the same filename defined, or is simultaneous submission explicitly excluded? [Coverage, Gap, Spec §FR-009, Contract §Persistence]
