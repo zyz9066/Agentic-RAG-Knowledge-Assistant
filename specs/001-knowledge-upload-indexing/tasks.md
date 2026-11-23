@@ -17,17 +17,17 @@ Paths in task descriptions are relative to the repository root.
 
 **Purpose**: Establish the project and reproducible tooling.
 
-- [ ] T001 Create `pyproject.toml` with the planned runtime and development dependencies, Python compatibility, Ruff, Pyright, and pytest configuration; generate `uv.lock` and resolve the complete dependency set including Langfuse.
-- [ ] T002 Create the Python package entry point in `app/__init__.py` and test directories via `tests/unit/__init__.py` and `tests/integration/__init__.py`.
-- [ ] T003 [P] Update `.gitignore` to exclude credentials, local knowledge databases and journals, uploaded files, model caches, and Python tooling artifacts without ignoring source or fixtures.
+- [X] T001 Create `pyproject.toml` with the planned runtime and development dependencies, Python compatibility, Ruff, Pyright, and pytest configuration; generate `uv.lock` and resolve the complete dependency set including Langfuse.
+- [X] T002 Create the Python package entry point in `app/__init__.py` and test directories via `tests/unit/__init__.py` and `tests/integration/__init__.py`.
+- [X] T003 [P] Update `.gitignore` to exclude credentials, local knowledge databases and journals, uploaded files, model caches, and Python tooling artifacts without ignoring source or fixtures.
 
 ## Phase 2: Foundational
 
 **Purpose**: Shared configuration and deterministic test support.
 
-- [ ] T004 Implement typed, environment-based settings and local paths in `app/config.py`, including embedding and trace configuration without hard-coded credentials.
-- [ ] T005 [P] Create deterministic embedding and recording trace test substitutes and reusable temporary-storage fixtures in `tests/conftest.py`; default tests must not contact a model provider or observability service.
-- [ ] T006 [P] Create original known-evidence text and PDF samples in `data/sample-knowledge/observatory.txt` and `data/sample-knowledge/observatory.pdf`, plus any non-sensitive fixtures needed in `tests/fixtures/`.
+- [X] T004 Implement typed, environment-based settings and local paths in `app/config.py`, including embedding and trace configuration without hard-coded credentials.
+- [X] T005 [P] Create deterministic embedding and recording trace test substitutes and reusable temporary-storage fixtures in `tests/conftest.py`; default tests must not contact a model provider or observability service.
+- [X] T006 [P] Create original known-evidence text and PDF samples in `data/sample-knowledge/observatory.txt` and `data/sample-knowledge/observatory.pdf`, plus any non-sensitive fixtures needed in `tests/fixtures/`.
 
 **Checkpoint**: Setup and foundational tasks complete before the story tasks.
 
@@ -49,8 +49,8 @@ and explicitly opt-in live or model checks.
 
 - [ ] T007 [P] [US1] Write upload contract tests in `tests/unit/test_upload_validation.py` for count and size boundaries, count-first precedence, ordered duplicate entries, all applicable validation reasons, UTF-8 markers and decoding, encrypted PDFs, supported formats, and non-English content.
 - [ ] T008 [P] [US1] Write ingestion tests in `tests/unit/test_ingestion.py` for parsing, empty or corrupt content, token-limited chunking without gaps or truncation, independent outcomes, provider failures, and safe messages.
-- [ ] T009 [P] [US1] Write real-SQLite tests in `tests/integration/test_storage.py` for atomic replacement, rollback, committed-only reads, restarts, provenance, model incompatibility, and invalid vectors.
-- [ ] T010 [P] [US1] Write cross-session and cross-process reservation tests in `tests/integration/test_reservations.py` for same-name rejection, unrelated filenames, unexpected reservation errors, retries, and interruption before and after commit.
+- [X] T009 [P] [US1] Write real-SQLite tests in `tests/integration/test_storage.py` for atomic replacement, rollback, committed-only reads, restarts, provenance, model incompatibility, and invalid vectors.
+- [X] T010 [P] [US1] Write cross-session and cross-process reservation tests in `tests/integration/test_reservations.py` for same-name rejection, unrelated filenames, unexpected reservation errors, retries, and interruption before and after commit.
 - [ ] T011 [P] [US1] Write retrieval contract tests in `tests/unit/test_retrieval.py` for ranked cosine results and provenance, empty indexes, input errors, incompatible or invalid embeddings, provider and storage failures, and per-call diagnostic correlation.
 - [ ] T012 [P] [US1] Write external-indexing consent tests in `tests/integration/test_indexing_consent.py` using a recording provider fake to verify disclosure, per-batch and per-provider opt-in, refusal, provider changes, and no document-text calls without consent, including UI reruns.
 - [ ] T013 [P] [US1] Write offline trace tests in `tests/unit/test_observability.py` for entered step hierarchy, outcomes, durations, optional model and usage metadata, distinct upload and retrieval identifiers, prohibited sentinel values, and simultaneous core and tracing failures.
@@ -60,8 +60,8 @@ and explicitly opt-in live or model checks.
 
 ### Implementation for User Story 1
 
-- [ ] T017 [US1] Implement SQLite document and chunk persistence in `app/storage.py` using the canonical constraints in [data-model.md](data-model.md): `KnowledgeDocument.document_id`, `KnowledgeDocument.filename`, `KnowledgeDocument.indexed_at`, `KnowledgeDocument.embedding_model_id`, `KnowledgeDocument.embedding_dimension`, `KnowledgeChunk.document_id`, `KnowledgeChunk.chunk_id`, `KnowledgeChunk.text`, `KnowledgeChunk.embedding`, and `KnowledgeChunk.page`; enforce foreign keys and atomic replacement.
-- [ ] T018 [US1] Implement non-waiting exact-filename reservations in `app/storage.py` across threads, sessions, and processes, with crash-safe release, distinct conflict versus error outcomes, and no change to committed knowledge on rejection or failure.
+- [X] T017 [US1] Implement SQLite document and chunk persistence in `app/storage.py` using the canonical constraints in [data-model.md](data-model.md): `KnowledgeDocument.document_id`, `KnowledgeDocument.filename`, `KnowledgeDocument.indexed_at`, `KnowledgeDocument.embedding_model_id`, `KnowledgeDocument.embedding_dimension`, `KnowledgeChunk.document_id`, `KnowledgeChunk.chunk_id`, `KnowledgeChunk.text`, `KnowledgeChunk.embedding`, and `KnowledgeChunk.page`; enforce foreign keys and atomic replacement.
+- [X] T018 [US1] Implement non-waiting exact-filename reservations in `app/storage.py` across threads, sessions, and processes, with crash-safe release, distinct conflict versus error outcomes, and no change to committed knowledge on rejection or failure.
 - [ ] T019 [P] [US1] Implement the embedding provider interface and local FastEmbed adapter in `app/embeddings.py`, including provider disclosure capabilities, model identity and dimensions, token-limit support, invalid-vector checks, and explicit unavailable-model errors.
 - [ ] T020 [US1] Implement submitted-entry models, opaque identifiers, ordered batch validation, lifecycle outcomes, UTF-8 and PDF parsing, and token-aware chunking in `app/ingestion.py`, following [data-model.md](data-model.md) and [knowledge-workflow.md](contracts/knowledge-workflow.md).
 - [ ] T021 [US1] Implement per-batch external-provider disclosure and consent, reservation, independent file processing, and atomic publication in `app/ingestion.py`; do not add a production remote provider.
