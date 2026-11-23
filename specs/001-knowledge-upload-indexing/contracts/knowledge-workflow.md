@@ -118,11 +118,24 @@ types are design targets for implementation, not existing code.
   disclosing the destination and exported data. The permission persists until
   revoked and is invalidated on a destination change. Provide keyboard-operable,
   screen-reader-accessible in-app disclosure, state, grant, and revoke controls.
-  A destination is local only if the entire delivery path and recipient are
-  established to remain on this computer, with no external forwarding, proxies,
-  tunnels, or redirects; loopback alone is insufficient. Treat an unknown or
-  unverifiable path as external. A local destination needs no external-export
-  consent.
+  Local exemption requires the user's explicit confirmation that the receiving
+  service and full delivery path remain on this computer without external
+  forwarding, proxies, tunnels, or redirects, plus an application-enforced
+  direct loopback connection with the connected peer verified before dispatch,
+  configured proxies bypassed, and redirects never followed. Loopback alone is
+  insufficient. If confirmation is absent or application checks cannot be
+  enforced or verified, classify the destination as external.
+- The accessible in-app confirmation explains that the user controls and is
+  responsible for the service's forwarding configuration, which the app cannot
+  independently verify after receipt. Bind confirmation to the destination and
+  current application process; require it again after restart and invalidate it
+  on revocation or a known destination or routing change. Permit the user to
+  report such a change and revoke confirmation.
+- Coordinate invalidation with local dispatch across sessions and processes
+  sharing the affected destination. After invalidation takes effect, discard
+  traces queued under that confirmation and begin no new dispatch under it;
+  already-started requests may complete. Without valid confirmation, use the
+  destination only under separate external-export permission.
 - Serialize the authorization check and dispatch start against revocation and
   destination changes across sessions and application processes using that
   permission. After either change takes effect, discard unsent traces queued

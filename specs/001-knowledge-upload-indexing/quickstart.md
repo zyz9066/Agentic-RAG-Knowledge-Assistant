@@ -75,11 +75,16 @@ matrix.
    copies.
 8. Use a keyboard and screen reader to access the upload view and identify each
    filename's textual status and errors without relying on color.
-9. Follow the implemented tracing setup to use an established end-to-end local
-   destination, or review the external destination and sanitized data and use
-   the in-app controls to grant and revoke permission. Exercise the disclosure,
-   permission state, and controls using keyboard and screen reader. A loopback
-   proxy alone does not establish a local destination. Confirm intentionally
+9. Follow the implemented tracing setup. For the local exemption, confirm in
+   the app that the receiving service and its delivery path stay on this
+   computer without forwarding, proxies, tunnels, or redirects; the user is
+   responsible for that service configuration. Confirm the application enforces
+   a direct, verified loopback connection and requests confirmation again after
+   restart. Report a known routing change and revoke confirmation before further
+   local-exempt export. Alternatively, review the external destination and
+   sanitized data and use the in-app controls to grant and revoke separate
+   external-export permission. Exercise the disclosure, confirmation, permission
+   state, and controls using keyboard and screen reader. Confirm intentionally
    disabled external export is shown as such, unavailable tracing is reported
    safely, and revocation or destination change discards unsent queued traces
    and stops new dispatches; already-started requests may finish and delivered

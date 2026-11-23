@@ -48,9 +48,16 @@ explicit, persistent opt-in bound to the selected destination; revocation or
 any destination change invalidates it. Store no credentials in the permission
 record. Invalidation coordinates with dispatch start; discard unsent queued
 traces, while already-started dispatches may finish and delivered data cannot
-be recalled. A destination is local only when the entire path and recipient
-are established to remain on this computer, without external forwarding,
-proxies, tunnels, or redirects; unknown paths are external.
+be recalled. Local-exemption confirmation is a separate process-lifetime value
+bound to the destination, not persistent across restart. It records the user's
+attestation of the local receiving service and delivery path; local dispatch
+also requires direct loopback and peer verification, bypassing configured
+proxies and not following redirects. Missing confirmation or unverifiable
+application checks make the destination external. Coordinate revocation and
+known destination or routing changes across sessions and processes using the
+destination, preventing new dispatch and discarding unsent queued traces under
+invalidated confirmations. The app cannot independently verify downstream
+forwarding by the receiving service.
 
 ## Retrieval operation
 

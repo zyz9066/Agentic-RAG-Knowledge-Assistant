@@ -54,7 +54,7 @@ and explicitly opt-in live or model checks.
 - [ ] T011 [P] [US1] Write retrieval contract tests in `tests/unit/test_retrieval.py` for ranked cosine results and provenance, empty indexes, input errors, incompatible or invalid embeddings, provider and storage failures, and per-call diagnostic correlation.
 - [ ] T012 [P] [US1] Write external-indexing consent tests in `tests/integration/test_indexing_consent.py` using a recording provider fake to verify disclosure, per-batch and per-provider opt-in, refusal, provider changes, and no document-text calls without consent, including UI reruns.
 - [ ] T013 [P] [US1] Write offline trace tests in `tests/unit/test_observability.py` for entered step hierarchy, outcomes, durations, optional model and usage metadata, distinct upload and retrieval identifiers, prohibited sentinel values, and simultaneous core and tracing failures.
-- [ ] T014 [P] [US1] Write trace-permission tests in `tests/integration/test_trace_permission.py` for local versus unknown or forwarding destinations, separate opt-in, persistence, revocation and destination changes, queued and in-flight dispatch races across processes, and disabled versus unavailable warnings.
+- [ ] T014 [P] [US1] Write trace-permission tests in `tests/integration/test_trace_permission.py` for local-user confirmation, loopback and peer checks, proxy bypass and redirect rejection, absent or expired confirmation, restart and routing changes, external opt-in persistence, revocation, queued and in-flight dispatch races across processes, and disabled versus unavailable warnings.
 - [ ] T015 [P] [US1] Write Streamlit and launch tests in `tests/integration/test_upload_ui.py` for submitted-entry snapshots, rerun safety, accessible status and permission controls, visible warnings, and fail-closed loopback configuration; record browser and screen-reader checks that AppTest cannot establish.
 - [ ] T016 [P] [US1] Write an explicitly opt-in cached-real-model known-evidence test in `tests/integration/test_real_model.py`, separate from the default offline suite, without claiming general retrieval quality.
 
@@ -66,10 +66,10 @@ and explicitly opt-in live or model checks.
 - [ ] T020 [US1] Implement submitted-entry models, opaque identifiers, ordered batch validation, lifecycle outcomes, UTF-8 and PDF parsing, and token-aware chunking in `app/ingestion.py`, following [data-model.md](data-model.md) and [knowledge-workflow.md](contracts/knowledge-workflow.md).
 - [ ] T021 [US1] Implement per-batch external-provider disclosure and consent, reservation, independent file processing, and atomic publication in `app/ingestion.py`; do not add a production remote provider.
 - [ ] T022 [US1] Implement ranked committed-evidence retrieval and fresh operation identifiers in `app/retrieval.py`, preserving the evidence result shape and making input, model, vector, provider, and storage errors explicit.
-- [ ] T023 [P] [US1] Implement destination classification and persistent external trace permission in `app/observability.py` according to [data-model.md](data-model.md) and [knowledge-workflow.md](contracts/knowledge-workflow.md), coordinating dispatch and invalidation across processes and discarding unsent traces.
+- [ ] T023 [P] [US1] Implement destination classification, process-lifetime local-user confirmation, direct loopback and peer checks, proxy bypass, redirect rejection, and persistent external trace permission in `app/observability.py` according to [data-model.md](data-model.md) and [knowledge-workflow.md](contracts/knowledge-workflow.md), coordinating dispatch and invalidation across processes and discarding unsent traces.
 - [ ] T024 [US1] Implement the Langfuse-backed tracing interface and separate safe diagnostics in `app/observability.py`, with an explicit field allowlist, no automatic sensitive capture, accurate operation and entered-step outcomes and durations, available metadata, and explicit detected-failure warnings.
 - [ ] T025 [US1] Instrument `app/ingestion.py` and `app/retrieval.py` with the observability interface, preserving core success and failure outcomes and correlating each submitted entry and retrieval call even when tracing is unavailable.
-- [ ] T026 [US1] Implement the local Streamlit upload and permission view in `app/ui.py`: explicit batch snapshot, transport and application limits, independent textual statuses and safe warnings, keyboard and screen-reader access, and separate external indexing and trace consent.
+- [ ] T026 [US1] Implement the local Streamlit upload and permission view in `app/ui.py`: explicit batch snapshot, transport and application limits, independent textual statuses and safe warnings, keyboard- and screen-reader-accessible local trace confirmation and revocation, and separate external indexing and trace consent.
 - [ ] T027 [US1] Implement the supported loopback-only launch and effective-configuration check in `app/ui.py` and `app/config.py`, retaining Streamlit security protections and failing closed on unsafe binding.
 - [ ] T028 [P] [US1] Implement the local evidence verification command in `app/retrieval_check.py`, including argument help, explicit errors, and separate operation-correlated observability diagnostics.
 - [ ] T029 [US1] Run the focused offline suites in `tests/unit/` and `tests/integration/`, resolve failures, and verify that no live model download or observability service is required by default.
@@ -80,7 +80,7 @@ manual checks have been completed. A live Langfuse check remains opt-in.
 
 ## Phase 4: Polish and Cross-Cutting Concerns
 
-- [ ] T031 Update `README.md` and `.env.example` with setup, loopback launch, model download and offline behavior, English retrieval limits, trace destination and consent controls, safe diagnostics, and opt-in checks; include credential names only.
+- [ ] T031 Update `README.md` and `.env.example` with setup, loopback launch, model download and offline behavior, English retrieval limits, process-lifetime local trace confirmation and the user's forwarding responsibility, trace destination and consent controls, safe diagnostics, and opt-in checks; include credential names only.
 - [ ] T032 Document the exact stopped-app local knowledge-base removal procedure and its limits in `README.md`, including database and journal/WAL files, external copies, backups, and the lack of secure-erasure guarantees.
 - [ ] T033 Add the planned Windows and Linux Python 3.11-3.13 matrix in `.github/workflows/ci.yml` to install the locked dependencies and run Ruff, Pyright, and the offline pytest suite; report only versions actually verified.
 - [ ] T034 Run the locked lint, format, type, and test commands and the applicable manual verification in `specs/001-knowledge-upload-indexing/quickstart.md`; measure sample-corpus indexing and retrieval performance without implying an unmeasured target or retrieval-quality guarantee.
@@ -102,8 +102,9 @@ manual checks have been completed. A live Langfuse check remains opt-in.
 - T017 precedes T018 and storage-backed integration; T019 and T020 precede T021;
   T017 and T019 precede T022; T023 precedes T024; T021, T022, and T024 precede
   T025; T025 precedes the integrated UI in T026 and the full offline run T029.
-- T027 follows T026; T028 follows T022 and T024; T030 follows T026, T027, and
-  T029. Tasks modifying the same file are sequential even if listed separately.
+- T027 follows T026; T028 follows T022 and T024; T029 follows T026, T027, and
+  T028; T030 follows T026, T027, and T029. Tasks modifying the same file are
+  sequential even if listed separately.
 
 ### Parallel opportunities
 

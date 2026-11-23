@@ -34,6 +34,8 @@ make their contents retrievable with source metadata.
 - Q: What if the upload widget rejects a very large file before application validation? → A: Allow a visible widget-level rejection; that file is not a submitted entry and has no application-level per-file outcome.
 - Q: How is external trace permission managed? → A: Use accessible in-app grant and revoke controls.
 - Q: What happens to unsent external traces on revocation or a destination change? → A: Discard them; already in-flight requests may complete and delivered data cannot be recalled.
+- Q: What evidence qualifies a trace destination for the local exemption? → A: Local-user confirmation of the service and delivery path, plus application checks for direct loopback access without proxies or redirects.
+- Q: How long does local-destination confirmation last? → A: Confirm again after each application restart; invalidate it when revoked or when a relevant destination or routing change is known.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -175,6 +177,11 @@ content without using a question-answering interface.
 34. **Given** external export is not authorized, **When** an operation runs,
     **Then** no external trace is dispatched and the user can see that export
     is disabled; that intentional state is not reported as a delivery failure.
+35. **Given** a trace destination with a directly connected loopback endpoint,
+    **When** the user confirms that the receiving service and its delivery path
+    are local and do not forward data, **Then** local export may proceed only
+    while the application's direct-connection checks pass. After an application
+    restart, the user must confirm again.
 
 ### Edge Cases
 
@@ -352,11 +359,27 @@ content without using a question-answering interface.
   The application MUST provide keyboard-operable in-app controls and associated
   screen-reader-readable text to review the disclosure, grant or revoke
   permission, and inspect its state without relying on color alone.
-  A destination is local only when the complete delivery path and recipient
-  are established to remain on this computer, without external forwarding,
-  proxies, tunnels, or redirects; loopback alone is insufficient. Treat an
-  unknown or unverifiable delivery path as external. Local destinations do not
-  require external-export consent.
+  To qualify for the local exemption, the local user MUST explicitly confirm
+  for the selected destination that the receiving service and its entire
+  delivery path remain on this computer, with no external forwarding, proxies,
+  tunnels, or redirects. The application MUST also enforce a direct connection
+  to a loopback address, verify the connected peer before dispatch, bypass
+  configured proxies, and never follow redirects for that connection. If these
+  checks cannot be enforced or verified, or the user cannot confirm the path,
+  treat the destination as external. A loopback address alone is not sufficient.
+  The application MUST explain that the user is responsible for the service's
+  forwarding configuration and that the application cannot independently
+  verify what the service does after receipt. The confirmation MUST be available
+  through keyboard- and screen-reader-accessible in-app controls, be specific
+  to the destination and current application process, and not survive a process
+  restart. It MUST be invalidated on revocation or a known destination or
+  routing change; the user MUST be able to report such a change and revoke it.
+  The local exemption does not require external-export consent.
+  Coordinate local-confirmation invalidation and local dispatch across sessions
+  and processes sharing the affected destination. Once invalidation takes effect,
+  start no new dispatch under the invalidated confirmation and discard its
+  unsent queued traces; already-started requests may finish. An unconfirmed
+  destination may be used only under the separate external-export permission.
   Coordinate authorization changes and dispatch across sessions and application
   processes using that permission so that, once revocation or a destination
   change takes effect, no new dispatch under the old permission starts and
@@ -463,10 +486,14 @@ content without using a question-answering interface.
   sentinel values for prohibited inputs and injected errors. Check external
   export is blocked before opt-in and after revocation or a destination change,
   including for traces awaiting dispatch; coordinate a dispatch/revocation race
-  and verify that an already-started dispatch may complete. Check local and
-  unverifiable or forwarding destinations, including a loopback proxy; only
-  established end-to-end local delivery is exempt. Verify in-app disclosure,
-  permission state, grant and revocation with keyboard and screen reader.
+  and verify that an already-started dispatch may complete. Check local-user
+  confirmation and direct loopback connection checks, including a non-loopback
+  or unverifiable peer, configured proxies, redirects, absent confirmation,
+  restart, known routing changes, revocation, queued and in-flight requests,
+  and concurrent processes. Treat paths that fail the checks or cannot be
+  confirmed as external; do not claim independent verification of downstream
+  service forwarding. Verify in-app disclosure, confirmation, permission state,
+  grant and revocation with keyboard and screen reader.
   Verify unauthorized export shows its disabled state without a delivery-failure
   warning, while missing configuration and detected unavailability warn safely.
   Verify distinct outcome-to-trace identifiers for duplicate entries and

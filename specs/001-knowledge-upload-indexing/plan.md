@@ -188,10 +188,17 @@ only during implementation.
    excluded content from reaching any exporter. Keep external export disabled
    until the user separately opts in to a disclosed destination; retain that
    permission until revocation or destination change. Provide accessible in-app
-   disclosure, state, grant, and revoke controls. Treat destinations as external
-   unless their entire delivery path and recipient are established to stay on
-   this computer without external forwarding, proxies, tunnels, or redirects;
-   loopback alone is not proof. Coordinate dispatch start with permission changes
+   disclosure, state, grant, and revoke controls. For local exemption, require
+   accessible user confirmation of the local receiving service and complete
+   delivery path and enforce a direct loopback connection with peer verification,
+   bypassing configured proxies and never following redirects. The app cannot
+   independently verify forwarding after receipt; disclose the user's
+   responsibility. Bind confirmation to the destination and process, require it
+   again after restart, and invalidate it on revocation or a known destination or
+   routing change. Coordinate invalidation with local dispatch across sessions
+   and processes, discarding unsent queued traces under invalidated confirmations.
+   Treat absent confirmation or unverifiable connection checks as external.
+   Coordinate dispatch start with external permission changes
    across sessions and application processes, discarding unsent queued traces
    when invalidated; already-started requests may finish and delivered data
    cannot be recalled. Show intentionally unauthorized
@@ -205,7 +212,8 @@ only during implementation.
     sentinel data, consent and revocation, and preserved operation outcomes
     including simultaneous core and tracing failures. Cover duplicate and
     over-count entry correlation, concurrent retrievals and validation errors,
-    destination classification, permission UI accessibility, intentional
+    destination classification and connection checks, process-lifetime local
+    confirmation and invalidation, permission UI accessibility, intentional
     disablement, and dispatch/revocation races. Test the direct
     validating-to-failed transition for unexpected reservation errors. Keep
     live Langfuse checks opt-in and document their setup and limitations.

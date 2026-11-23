@@ -104,8 +104,12 @@ Sources: [Streamlit on PyPI](https://pypi.org/project/streamlit/),
 **Decision**: Plan Langfuse Python SDK 5.2.0 behind a small tracing interface,
 with per-file indexing and retrieval traces and a deterministic offline
 substitute. External trace export requires separate, revocable opt-in through
-accessible in-app controls. Only an established end-to-end local destination
-is exempt; a loopback proxy alone is not proof. Discard unsent queued traces
+accessible in-app controls. Local exemption requires user confirmation of the
+receiving service and end-to-end local path, renewed after process restart,
+plus direct loopback and peer checks with configured proxies bypassed and
+redirects not followed. The user is responsible for downstream service
+configuration; the application cannot independently verify forwarding after
+receipt. A loopback proxy alone is not proof. Discard unsent queued traces
 when permission is invalidated, while acknowledging in-flight dispatches may
 complete. Dispatch coordination and destination classification remain
 implementation and verification work, not demonstrated SDK behavior.
