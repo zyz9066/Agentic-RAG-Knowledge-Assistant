@@ -29,6 +29,8 @@ make their contents retrievable with source metadata.
 - Q: What final status should be shown for undecodable text and encrypted PDFs? → A: Mark both as rejected; mark parsing, embedding, and storage errors as failed.
 - Q: How should retrieval handle a question containing only whitespace? → A: Reject empty or whitespace-only questions with an explicit input error.
 - Q: What should happen when two submissions try to index the same filename at the same time? → A: Reject the later same-name attempt while the first is in progress, with a clear message to retry.
+- Q: Where may workflow traces be sent? → A: Use a local or external Langfuse destination; external export requires separate explicit opt-in.
+- Q: How long should permission to send sanitized traces to an external observability service last? → A: Until explicitly revoked or the destination changes.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -144,6 +146,22 @@ content without using a question-answering interface.
     committed version is changed by the rejected attempt.
     **When** the first attempt finishes or is interrupted, **Then** a later
     submission can retry that filename.
+28. **Given** an eligible file cannot acquire its filename reservation because
+    of an unexpected error, **When** validation finishes, **Then** its status
+    changes from validating to failed with a safe explanation, no processing
+    or replacement occurs, and other eligible files proceed independently.
+29. **Given** a configured, available trace destination, **When** indexing or
+    retrieval completes or fails, **Then** its trace records the entered
+    workflow steps, their outcomes and durations, and available model and usage
+    details without recording sensitive content.
+30. **Given** an external trace destination, **When** external trace export has
+    not been explicitly enabled for that destination, **Then** no trace data is
+    sent to it. Permission remains in effect until revoked or the destination
+    changes; a changed destination requires a new opt-in.
+31. **Given** tracing is unavailable or a tracing failure is detected,
+    **When** indexing or retrieval proceeds, **Then** a safe observability
+    warning is reported without changing the operation's actual outcome or
+    hiding an application failure.
 
 ### Edge Cases
 
@@ -161,6 +179,10 @@ content without using a question-answering interface.
 - Overlapping submissions to the same knowledge base cannot index the same
   exact filename simultaneously, even if they originate from separate sessions
   or application processes. A rejected overlap does not alter committed data.
+- An unexpected reservation error fails the affected file before processing;
+  it does not permit unprotected indexing or modify committed knowledge.
+- Trace creation or delivery can fail independently of indexing or retrieval;
+  a detected observability failure is reported separately from the operation.
 - A failed indexing attempt must not leave partial new chunks available for
   retrieval or remove a previously indexed version.
 - An interruption before commit leaves the previous committed document, if
@@ -273,6 +295,41 @@ content without using a question-answering interface.
   The filename becomes available for retry when the active attempt completes,
   fails, or is interrupted. Same-batch duplicate and other validation rules
   continue to apply.
+- **FR-024**: An unexpected filename-reservation error MUST transition the
+  affected file from validating to failed with a safe per-file explanation.
+  The system MUST NOT process that file or change its committed knowledge;
+  other eligible files MUST continue independently. A conflicting reservation
+  remains a rejection under FR-023, not an unexpected reservation error.
+- **FR-025**: When tracing is available, the system MUST trace each submitted
+  file, including entries rejected for batch count, and each retrieval request.
+  Indexing traces MUST identify entered validation, reservation, parsing,
+  chunking, embedding, and storage steps; retrieval traces MUST identify entered
+  input-validation, query-embedding, and evidence lookup and ranking steps.
+  Each entered step and its parent operation MUST include an outcome and
+  non-negative elapsed duration; record embedding model identity and usage
+  details when available, without inventing unavailable values. A rejected or
+  failed operation MUST record only steps actually entered.
+- **FR-026**: Traces and observability diagnostics MUST exclude document bytes
+  and text, questions, filenames, file paths, embedding vectors, credentials,
+  and raw exception details. Use non-content operation identifiers, controlled
+  step names, safe error categories, sanitized model identities, and numeric
+  usage details for correlation and diagnosis. External trace export MUST be
+  disabled unless the user explicitly opts in for the selected destination
+  after disclosure of its identity and the data sent. This permission is
+  separate from indexing consent, persists until revoked, and is invalidated
+  when the destination changes.
+  The user MUST be able to revoke it. Export authorization MUST be checked at
+  dispatch; discard unsent queued traces after revocation or a destination
+  change. Previously transmitted data cannot be recalled. Local trace
+  destinations do not require external-export consent.
+- **FR-027**: Missing or unavailable trace configuration and detected trace
+  creation or delivery failures MUST produce a safe observability warning,
+  separately from the indexing or retrieval outcome. Upload warnings MUST be
+  visible in the upload view; retrieval callers MUST be able to access a safe
+  diagnostic through a separate operation-correlated channel without changing
+  the evidence result shape. Observability failures MUST NOT prevent core
+  operations, alter their outcomes, or hide their errors.
+  The system MUST NOT claim successful delivery without confirmation.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -301,6 +358,10 @@ content without using a question-answering interface.
   retrievable without exposing partial new contents.
 - **SC-005**: In a manual walkthrough, a user can identify the status and final
   outcome of every file in a mixed batch without inspecting internal logs.
+- **SC-006**: In offline checks with a recording trace substitute, every
+  exercised indexing and retrieval operation includes exactly the entered
+  required steps, their outcomes and durations, and available model or usage
+  details; no prohibited sensitive values appear in recorded trace data.
 
 ## Assumptions
 
@@ -340,10 +401,23 @@ content without using a question-answering interface.
   without an initial marker and marker-only files. Exercise overlapping
   same-name submissions across sessions and processes, independently
   progressing other filenames, preservation of committed evidence, and retry
-  after completion, failure, and interruption.
+  after completion, failure, and interruption. Inject an unexpected reservation
+  error and check the validating-to-failed transition and unchanged knowledge.
 - Use deterministic embedding and storage substitutes where appropriate so
   routine tests do not require live providers. Verify persistence behavior using
   a suitable local test environment.
+- With a recording trace substitute, check successful, rejected, and failed
+  indexing and successful and failed retrieval: operation and entered-step
+  names, outcomes, non-negative durations, parent relationships, available model
+  and usage metadata, and the absence of document text, questions, filenames,
+  paths, vectors, credentials, and raw exception details. Use recognizable
+  sentinel values for prohibited inputs and injected errors. Check external
+  export is blocked before opt-in and after revocation or a destination change,
+  including for traces awaiting dispatch,
+  while local destinations do not require that opt-in. Inject trace creation
+  and delivery failures and verify safe warnings and unchanged core outcomes,
+  including simultaneous application failure. Routine checks require no live
+  observability service.
 - Known-evidence example: index an original text file named `observatory.txt`
   containing only `The observatory is located in Larch Valley.` Ask `Where is
   the observatory located?` The returned evidence must contain that sentence,

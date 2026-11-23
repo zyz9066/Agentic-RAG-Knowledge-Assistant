@@ -28,10 +28,13 @@ uv run --locked pyright
 uv run --locked pytest
 ```
 
-The default test run uses deterministic embeddings and temporary SQLite
-databases, with no live provider or model download. Run the separately documented
-opt-in real-model test with a preloaded cache to check actual semantic retrieval.
-CI must exercise the declared Python/platform matrix.
+The default test run uses deterministic embeddings, a recording trace
+substitute, and temporary SQLite databases, with no live provider,
+observability service, or model download. It covers trace privacy, consent,
+and observability failures as specified in [the workflow contract](contracts/knowledge-workflow.md).
+Run the separately documented opt-in real-model test with a preloaded cache to
+check actual semantic retrieval. CI must exercise the declared Python/platform
+matrix.
 
 ## Manual upload and retrieval
 
@@ -68,6 +71,12 @@ CI must exercise the declared Python/platform matrix.
    copies.
 8. Use a keyboard and screen reader to access the upload view and identify each
    filename's textual status and errors without relying on color.
+9. Follow the implemented tracing setup to use a local destination, or
+   explicitly opt in after reviewing an external destination and its sanitized
+   trace data. Confirm the application reports unavailable tracing safely and
+   that revoking permission or changing the destination stops external export.
+   A live Langfuse inspection is opt-in and must use non-sensitive sample data;
+   do not claim remote delivery without confirmation.
 
 Keep the configured knowledge location on an unshared local location. The user
 is responsible for system file sharing and other services that could expose it;

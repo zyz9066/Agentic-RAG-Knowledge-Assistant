@@ -34,7 +34,10 @@ types are design targets for implementation, not existing code.
   success or failure; interruption must also make it available for retry. A
   rejected overlap never changes previously committed knowledge.
 - Lifecycle: `pending` -> `validating` -> `processing` -> `indexed` or `failed`;
-  validation or conflicting-reservation rejection transitions to `rejected`.
+  batch-count rejection transitions directly from `pending` to `rejected`;
+  per-file validation or conflicting-reservation rejection transitions from
+  `validating` to `rejected`. An unexpected reservation error transitions
+  directly from `validating` to `failed`, before processing begins.
   Undecodable text, marker-only text, and encrypted PDFs are rejected during
   validation; corrupt parsing, no-text PDF extraction, embedding, and storage
   errors fail during processing. A reservation error other than a conflicting
@@ -78,6 +81,40 @@ types are design targets for implementation, not existing code.
   silently compare incompatible vectors.
 - Provider, validation, and storage failures are explicit errors, not empty
   successful result sets. Callers must treat retrieved text as untrusted data.
+
+## Observability
+
+- When tracing is available, each submitted file, including an entry rejected
+  for batch count, and each retrieval request has an operation trace.
+  Indexing records entered validation, reservation, parsing, chunking, embedding,
+  and storage steps; retrieval records entered input-validation, query-embedding,
+  and evidence lookup and ranking steps. A rejected or failed operation does not
+  claim steps it never entered.
+- Each operation and entered step records its outcome and non-negative elapsed
+  duration, with parent-child relationships. Include available embedding model
+  identity and usage details without fabricating missing values.
+- Trace and diagnostic fields use an allowlist of non-content operation
+  identifiers, controlled step names, safe outcome/error categories, durations,
+  sanitized model identities, and available numeric usage details. Exclude
+  document bytes and text, questions, filenames, paths, vectors, credentials,
+  and raw exception details.
+  Disable or sanitize automatic argument, result, and exception capture before
+  any export.
+- An external trace destination requires separate explicit opt-in after
+  disclosing the destination and exported data. The permission persists until
+  revoked and is invalidated on a destination change. A local destination
+  needs no external-export consent. Check authorization at dispatch and discard
+  unsent queued traces after revocation or a destination change. Previously
+  transmitted data cannot be recalled.
+- Missing or unavailable trace configuration and detected creation or delivery
+  failures produce safe diagnostics separately from the core result. Show upload
+  warnings in the view and expose retrieval diagnostics through a separate,
+  operation-correlated channel without changing the evidence result shape. Do
+  not mask application errors, change outcomes, or assert delivery without
+  confirmation.
+- Offline checks use a recording substitute and injected failures to assess
+  entered steps, outcomes, durations, permitted fields, privacy, authorization,
+  and preservation of successful and failed core outcomes.
 
 ## Persistence
 

@@ -93,3 +93,26 @@ Sources: [Streamlit on PyPI](https://pypi.org/project/streamlit/),
 [FastEmbed on PyPI](https://pypi.org/project/fastembed/),
 [uv lock and sync](https://docs.astral.sh/uv/concepts/projects/sync/),
 [Streamlit testing](https://docs.streamlit.io/develop/concepts/app-testing/get-started).
+
+## Workflow observability
+
+**Decision**: Plan Langfuse Python SDK 5.2.0 behind a small tracing interface,
+with per-file indexing and retrieval traces and a deterministic offline
+substitute. External trace export requires separate, revocable opt-in.
+
+**Rationale**: The constitution requires workflow traces. Stable step names,
+parent-child relationships, outcomes, and durations make failures diagnosable;
+an allowlist avoids exporting document or question content. The SDK's automatic
+input, output, and exception capture must not bypass that allowlist. As of the
+research date, PyPI declares Python >=3.11 and <4 for SDK 5.2.0; resolution
+alongside the other project dependencies and runtime compatibility remain
+unverified.
+
+**Alternatives considered**: Unconditional external export conflicts with the
+user's opt-in choice; a live-only test strategy conflicts with deterministic
+offline verification.
+
+Sources: [Langfuse trace best practices](https://langfuse.com/docs/observability/best-practices),
+[instrumentation](https://langfuse.com/docs/observability/sdk/instrumentation),
+[masking](https://langfuse.com/docs/observability/features/masking),
+[Langfuse on PyPI](https://pypi.org/project/langfuse/).

@@ -36,6 +36,13 @@ transitions are specified in [knowledge-workflow.md](contracts/knowledge-workflo
 Consent for a remote provider is tied to one batch and provider and is not
 stored as standing permission.
 
+## Trace export permission
+
+External trace permission is separate from upload-batch consent. It is an
+explicit, persistent opt-in bound to the selected destination; revocation or
+any destination change invalidates it. Store no credentials in the permission
+record. Pending traces cannot be exported after permission is invalidated.
+
 ## Consistency and lifecycle
 
 - Parse, chunk, and embed a candidate fully before opening the replacement write

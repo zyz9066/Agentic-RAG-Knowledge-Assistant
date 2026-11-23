@@ -20,12 +20,13 @@ overlaps with a retry message.
 **Language/Version**: Python 3.11 minimum; target 3.11-3.13 on Windows and Linux
 in CI. Declare the actual tested range in `pyproject.toml`.
 
-**Primary Dependencies**: Streamlit 1.67.0, pypdf 7.1.1, FastEmbed 0.9.1;
+**Primary Dependencies**: Streamlit 1.67.0, pypdf 7.1.1, FastEmbed 0.9.1,
+Langfuse Python SDK 5.2.0;
 pytest, Ruff, and Pyright for development. Resolve compatible transitive
 dependencies and record exact versions in `uv.lock` during implementation.
-Separate binary-only dependency resolutions succeeded for Python 3.11-3.13 on
-Windows and Linux; a unified lock and platform/runtime verification remain to be
-performed.
+Separate binary-only dependency resolutions excluding Langfuse succeeded for
+Python 3.11-3.13 on Windows and Linux; resolution including Langfuse, a unified
+lock, and platform/runtime verification remain to be performed.
 
 **Storage**: One local SQLite database containing document metadata, chunk text,
 and float32 embedding vectors. Use exact cosine search over committed vectors;
@@ -58,7 +59,7 @@ is intentionally not a large-corpus solution; no throughput guarantee is made.
 | Security and privacy | Pass: local-only access, validation, safe errors. | Pass: loopback launch, local embeddings, per-batch consent boundary, no raw content in logs. |
 | Modular Python architecture | Pass: small monolith and clear boundaries. | Pass: separate upload, retrieval, persistence, embedding, UI, and configuration responsibilities. |
 | Verifiable quality | Pass: deterministic tests and real persistence checks. | Pass: focused offline tests, optional real-model smoke, lint and type-check gates. |
-| Observable, reliable workflows | Pass: explicit statuses and failures for ingestion. | Pass: sanitized diagnostic events and per-file status; CrewAI/Langfuse question traces remain Feature 2 scope. |
+| Observable, reliable workflows | Pass: trace status and latency for ingestion and retrieval. | Pass subject to implementation verification: privacy-safe Langfuse traces, explicit diagnostics, and offline fakes; end-to-end question-answer traces remain Feature 2 scope. |
 | Technology and workflow | Pass: Python, Streamlit, reproducible lock, Spec Kit. | Pass: plan and contracts precede implementation; `uv.lock`, Ruff, Pyright, and CI planned. |
 
 No constitution exception is required. The actual unified dependency lock, CI
@@ -91,6 +92,7 @@ app/
 ├── embeddings.py        # local embedding adapter and protocol
 ├── retrieval.py         # evidence retrieval interface
 ├── retrieval_check.py   # local verification CLI, not an answer UI
+├── observability.py     # tracing interface, diagnostics, consent boundary
 └── storage.py           # SQLite transactions and exact vector search
 data/sample-knowledge/   # public-domain or original sample fixtures
 tests/
@@ -169,9 +171,29 @@ only during implementation.
    batches, committed-data preservation, and retries after success, failure,
    and process interruption; verify different filenames can proceed.
 8. Document setup, model download and offline limitations, `.env.example` with
-   variable names only if external credentials are introduced later, local data
-   removal, manual checks, and operational errors. Never commit secrets, local
-   knowledge databases, uploaded files, model caches, or sensitive test data.
+   credential variable names only, local data removal, manual checks, trace
+   destination configuration and opt-in, and operational errors. Never commit
+   secrets, local knowledge databases, uploaded files, model caches, or
+   sensitive test data.
+9. Provide Langfuse-backed per-file indexing and retrieval traces through a
+   small observability interface. Record the operation and entered steps,
+   outcomes, durations, and available model/usage metadata as specified in
+   FR-025. Use controlled names and an explicit field allowlist; disable
+   automatic capture of arguments, results, and raw exceptions, and prevent
+   excluded content from reaching any exporter. Keep external export disabled
+   until the user separately opts in to a disclosed destination; retain that
+   permission until revocation or destination change, check it at dispatch, and
+   discard queued unsent traces when invalidated. Provide a documented way to
+   revoke permission. Surface missing configuration and detected tracing
+   failures separately without changing core outcomes or claiming unconfirmed
+   delivery. Local destinations need no
+   external-export consent.
+10. Use a recording trace fake and failure injection for offline tests of
+    step hierarchy, statuses, durations, optional model/usage values, prohibited
+    sentinel data, consent and revocation, and preserved operation outcomes
+    including simultaneous core and tracing failures. Test the direct
+    validating-to-failed transition for unexpected reservation errors. Keep
+    live Langfuse checks opt-in and document their setup and limitations.
 
 ## Complexity Tracking
 
