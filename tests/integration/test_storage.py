@@ -81,3 +81,9 @@ def test_incompatible_model_and_dimension_are_explicit_errors(tmp_path: Path) ->
         store.replace("other.txt", "model-b", [chunk("other")])
     with pytest.raises(ValueError, match="embedding"):
         store.read_chunks("model-a", 3)
+
+
+def test_whitespace_chunk_can_preserve_document_text(tmp_path: Path) -> None:
+    store = SQLiteKnowledgeStore(tmp_path / "knowledge.sqlite3")
+    store.replace("facts.txt", "model-a", [chunk("   ")])
+    assert store.read_chunks("model-a", 2)[0].text == "   "

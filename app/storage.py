@@ -150,9 +150,7 @@ class SQLiteKnowledgeStore:
             raise ValueError("filename and at least one chunk are required")
         dimension = len(chunks[0].embedding)
         if any(
-            not chunk.chunk_id
-            or not chunk.text.strip()
-            or len(chunk.embedding) != dimension
+            not chunk.chunk_id or not chunk.text or len(chunk.embedding) != dimension
             for chunk in chunks
         ):
             raise ValueError("invalid chunk or embedding dimension")

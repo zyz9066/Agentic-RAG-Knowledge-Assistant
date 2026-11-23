@@ -11,9 +11,14 @@ class FakeEmbeddings:
     dimension = 16
     max_tokens = 32
     sends_text_externally = False
+    provider_id = "local-fake"
+    data_description = "Document text is processed locally."
 
     def __init__(self) -> None:
         self.calls: list[list[str]] = []
+
+    def token_count(self, text: str) -> int:
+        return len(text.split()) + 2
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         self.calls.append(texts.copy())
