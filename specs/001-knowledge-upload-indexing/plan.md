@@ -109,7 +109,12 @@ only during implementation.
 
 1. Use a Streamlit form to snapshot a batch and explicit submit action. Keep
    status in session state across reruns, avoid repeating a submission on rerun,
-   and update visible per-file statuses. Validate count, size, extension, content,
+   and update visible per-file statuses. Only widget-accepted entries in that
+   snapshot are submitted; show widget-level rejection and permit correction and
+   resubmission without inventing a per-entry application result. Configure the
+   transport limit to admit 10 MiB and one byte over for application validation.
+   Verify actual browser behavior for an over-transport-limit selection and
+   other selected files; do not assume a rejected file reaches Python. Validate count, size, extension, content,
    and duplicate names server-side; never trust the widget filter alone. Report
    all applicable per-file validation reasons within a permitted-size batch;
    reject an oversized batch for count before per-file processing. Preserve
@@ -182,16 +187,26 @@ only during implementation.
    automatic capture of arguments, results, and raw exceptions, and prevent
    excluded content from reaching any exporter. Keep external export disabled
    until the user separately opts in to a disclosed destination; retain that
-   permission until revocation or destination change, check it at dispatch, and
-   discard queued unsent traces when invalidated. Provide a documented way to
-   revoke permission. Surface missing configuration and detected tracing
+   permission until revocation or destination change. Provide accessible in-app
+   disclosure, state, grant, and revoke controls. Treat destinations as external
+   unless their entire delivery path and recipient are established to stay on
+   this computer without external forwarding, proxies, tunnels, or redirects;
+   loopback alone is not proof. Coordinate dispatch start with permission changes
+   across sessions and application processes, discarding unsent queued traces
+   when invalidated; already-started requests may finish and delivered data
+   cannot be recalled. Show intentionally unauthorized
+   export as disabled, not as a delivery failure. Surface missing configuration and detected tracing
    failures separately without changing core outcomes or claiming unconfirmed
-   delivery. Local destinations need no
-   external-export consent.
+   delivery. Assign opaque operation identifiers to upload entries before batch
+   validation and let retrieval callers obtain and pass a fresh identifier before
+   invocation to correlate separate diagnostics, including errors.
 10. Use a recording trace fake and failure injection for offline tests of
     step hierarchy, statuses, durations, optional model/usage values, prohibited
     sentinel data, consent and revocation, and preserved operation outcomes
-    including simultaneous core and tracing failures. Test the direct
+    including simultaneous core and tracing failures. Cover duplicate and
+    over-count entry correlation, concurrent retrievals and validation errors,
+    destination classification, permission UI accessibility, intentional
+    disablement, and dispatch/revocation races. Test the direct
     validating-to-failed transition for unexpected reservation errors. Keep
     live Langfuse checks opt-in and document their setup and limitations.
 

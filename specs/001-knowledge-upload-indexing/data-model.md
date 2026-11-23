@@ -30,8 +30,13 @@ database as their text and metadata.
 ## UploadBatch and UploadResult
 
 These are transient session/application values, not persistent document records.
-An upload batch contains at most 10 files; an over-limit submission is rejected
-as a whole. A result includes filename, status, and a safe message. Status
+The submitted batch snapshots widget-accepted entries at explicit submit; files
+rejected by the widget before submission have no application result. An
+over-limit submission is rejected as a whole. Each submitted entry has a fresh,
+opaque, non-content operation identifier assigned before batch validation.
+A result associates that identifier with the entry's filename, status, and safe
+message; a trace, when available, uses the same identifier. Separate entries
+remain distinguishable even with matching filenames. Status
 transitions are specified in [knowledge-workflow.md](contracts/knowledge-workflow.md).
 Consent for a remote provider is tied to one batch and provider and is not
 stored as standing permission.
@@ -41,7 +46,18 @@ stored as standing permission.
 External trace permission is separate from upload-batch consent. It is an
 explicit, persistent opt-in bound to the selected destination; revocation or
 any destination change invalidates it. Store no credentials in the permission
-record. Pending traces cannot be exported after permission is invalidated.
+record. Invalidation coordinates with dispatch start; discard unsent queued
+traces, while already-started dispatches may finish and delivered data cannot
+be recalled. A destination is local only when the entire path and recipient
+are established to remain on this computer, without external forwarding,
+proxies, tunnels, or redirects; unknown paths are external.
+
+## Retrieval operation
+
+The caller obtains a fresh opaque operation identifier before invoking retrieval
+and passes it with the request. A separate diagnostic channel associates safe
+warnings with that identifier, including on failure. The evidence list and its
+records do not include it. Concurrent invocations use distinct identifiers.
 
 ## Consistency and lifecycle
 

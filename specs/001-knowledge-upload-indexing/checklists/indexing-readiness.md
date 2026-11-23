@@ -87,3 +87,38 @@
 - `/speckit-implement` reads checklist checkbox state as a gate and must not modify markers.
 - `checklists/requirements.md` has a separate built-in lifecycle maintained by `/speckit-specify` and `/speckit-clarify`.
 - Add review findings inline and link to relevant requirements or decisions.
+
+## Cross-Workflow Consistency
+
+- [x] CHK041 Are the separate purposes, disclosure requirements, and durations of indexing-service consent and trace-export permission consistently distinguished? [Consistency, Spec §FR-014, Spec §FR-026, Data Model §Trace export permission]
+  - Review: Indexing consent is per batch; separately disclosed trace permission persists until revoked or the destination changes.
+- [x] CHK042 Are per-entry upload outcomes and trace correlation requirements compatible when a batch contains duplicate filenames or exceeds the file-count limit, without exposing filenames in traces? [Consistency, Spec §FR-002, Spec §FR-025, Spec §FR-026]
+  - Review: FR-025 assigns each entry a distinct opaque identifier before batch validation and associates it with its ordered outcome and available trace; filenames remain excluded from traces.
+- [x] CHK043 Are the requirements for retrieval evidence and separately reported observability diagnostics clear about their distinct contents and their relationship to the same operation? [Clarity, Spec §FR-006, Spec §FR-025, Spec §FR-027, Contract §Retrieval]
+  - Review: Callers obtain and pass a fresh operation identifier before retrieval and use it to find separate diagnostics, including for errors and concurrent calls; evidence shape is unchanged.
+- [x] CHK044 Are outcome and warning requirements consistent when an indexing or retrieval failure and an observability failure occur together? [Consistency, Spec §FR-007, Spec §FR-027, Spec §Verification]
+  - Review: FR-027 preserves core outcomes and errors, and Verification covers simultaneous application and tracing failures.
+- [x] CHK045 Are requirements for local knowledge removal and trace retention sufficiently bounded to distinguish local indexed data from previously exported trace data? [Coverage, Gap, Spec §FR-016, Spec §FR-026, Contract §Persistence]
+  - Review: Local knowledge removal is distinct from previously transmitted data, which cannot be recalled; traces exclude document content.
+
+## Consent and Boundary Conditions
+
+- [x] CHK046 Is the boundary between local and external trace destinations clear enough to determine when separate export permission is required? [Clarity, Spec §FR-026, Contract §Observability]
+  - Review: Only an established end-to-end local path and recipient qualify; unknown paths and loopback forwarding do not qualify for the exemption.
+- [x] CHK047 Are the effects of revocation or a destination change on queued, already dispatched, and previously delivered traces distinguished clearly? [Coverage, Spec §FR-026, Contract §Observability]
+  - Review: FR-026 coordinates dispatch start with invalidation, discards unsent traces, permits already-started requests to complete, and acknowledges delivered data cannot be recalled.
+- [x] CHK048 Are trace-export permission persistence and invalidation requirements clear across application restarts and destination changes? [Recovery, Spec §FR-026, Data Model §Trace export permission]
+  - Review: Permission is persistent until revoked and is invalidated by a destination change.
+- [x] CHK049 Are keyboard and screen-reader requirements specified for the trace permission and revocation interaction, or is another accessible method explicitly documented? [Accessibility, Spec §FR-026, Spec §Verification]
+  - Review: FR-026 requires accessible in-app disclosure, permission state, grant, and revoke controls; verification includes keyboard and screen-reader checks.
+- [x] CHK050 Are requirements for observability warnings clear when no trace destination is configured, external export is not authorized, or a configured destination becomes unavailable? [Coverage, Spec §FR-026, Spec §FR-027]
+  - Review: FR-027 distinguishes intentional disabled export from missing configuration and detected unavailability or failures, which require safe warnings.
+
+## Acceptance and Dependencies
+
+- [x] CHK051 Are upload count and size rejection outcomes consistent with the planned upload view's handling of submissions rejected before application-level validation? [Consistency, Spec §FR-002, Spec §FR-015, Research §Parsing and UI]
+  - Review: The user accepted visible widget-level rejection before submission; FR-002 and FR-015 define the application batch and preserve per-entry limits for submitted files. Browser behavior remains an implementation verification task.
+- [x] CHK052 Are the evidence and privacy assertions for offline trace acceptance specific enough to distinguish absent optional metadata from prohibited content? [Measurability, Spec §FR-025, Spec §FR-026, Spec §SC-006, Spec §Verification]
+  - Review: Available model and usage values are recorded without invention; prohibited fields and offline sentinel checks are identified.
+- [x] CHK053 Are dependency-resolution and runtime-compatibility assumptions identified separately from verified support for the planned Python and platform matrix? [Dependency, Plan §Technical Context, Research §Dependency and test strategy, Research §Workflow observability]
+  - Review: The plan and research distinguish earlier resolution checks from the unverified combined lock, installation, and runtime matrix.

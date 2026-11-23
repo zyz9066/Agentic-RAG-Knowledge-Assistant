@@ -7,12 +7,21 @@ types are design targets for implementation, not existing code.
 
 - Input: a submission of `(filename, bytes)` entries. A batch of one to ten
   files is evaluated per file: reject each file over 10 MiB and process other
-  eligible files independently. Inputs exceeding either limit still receive
-  the specified rejection outcomes.
+  eligible files independently. Submitted entries exceeding either limit still
+  receive the specified rejection outcomes. A submission snapshots the entries
+  accepted by the widget at explicit submit; a file rejected by the widget
+  before submission is not an entry and has no application-level result.
+- Show the widget-level rejection and allow correction and resubmission. Set
+  its transport limit high enough to pass 10 MiB and one byte over to application
+  validation. Verify actual mixed-selection behavior; do not assume other
+  selected files were submitted when a widget rejection occurs.
 - An oversized batch is rejected as a whole; each entry is reported as rejected.
 - Every submitted entry has a distinct outcome in submission order, including
   same-named entries in an oversized batch. Duplicate filenames within a
   within-limit batch are all rejected; other entries proceed.
+- Assign each entry a distinct opaque operation identifier before count
+  validation. Associate the identifier with that entry's outcome and its trace
+  when available, without using the filename as an identifier or trace field.
 - Each rejected file in a within-limit batch reports all applicable duplicate,
   empty-file, unsupported-type, and size validation reasons. Over-limit batches
   are rejected for count before per-file processing.
@@ -68,6 +77,11 @@ types are design targets for implementation, not existing code.
 
 - Input: a question containing at least one non-whitespace character and a
   positive maximum result count. Invalid inputs produce explicit errors.
+- Before invoking retrieval, the caller obtains a fresh opaque operation
+  identifier from the application and passes it with the request. The caller
+  uses that identifier to find diagnostics in the separate diagnostic channel,
+  even when retrieval raises an error. Each concurrent invocation uses its own
+  identifier. The identifier is not added to evidence records or the result list.
 - Output: ranked list of evidence records containing text, exact source filename,
   chunk identifier, and similarity score. An empty index returns an empty list.
   Otherwise return exactly the lesser of the requested maximum and the number
@@ -102,10 +116,21 @@ types are design targets for implementation, not existing code.
   any export.
 - An external trace destination requires separate explicit opt-in after
   disclosing the destination and exported data. The permission persists until
-  revoked and is invalidated on a destination change. A local destination
-  needs no external-export consent. Check authorization at dispatch and discard
-  unsent queued traces after revocation or a destination change. Previously
-  transmitted data cannot be recalled.
+  revoked and is invalidated on a destination change. Provide keyboard-operable,
+  screen-reader-accessible in-app disclosure, state, grant, and revoke controls.
+  A destination is local only if the entire delivery path and recipient are
+  established to remain on this computer, with no external forwarding, proxies,
+  tunnels, or redirects; loopback alone is insufficient. Treat an unknown or
+  unverifiable path as external. A local destination needs no external-export
+  consent.
+- Serialize the authorization check and dispatch start against revocation and
+  destination changes across sessions and application processes using that
+  permission. After either change takes effect, discard unsent traces queued
+  under the old permission and start no new dispatch under it. A dispatch already
+  started may complete; previously delivered data cannot be recalled.
+- A configured external destination without opt-in is intentionally disabled:
+  show its disabled permission state, do not attempt export, and do not report
+  lack of authorization alone as a delivery failure.
 - Missing or unavailable trace configuration and detected creation or delivery
   failures produce safe diagnostics separately from the core result. Show upload
   warnings in the view and expose retrieval diagnostics through a separate,

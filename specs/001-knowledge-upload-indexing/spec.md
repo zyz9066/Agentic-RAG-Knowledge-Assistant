@@ -31,6 +31,9 @@ make their contents retrievable with source metadata.
 - Q: What should happen when two submissions try to index the same filename at the same time? → A: Reject the later same-name attempt while the first is in progress, with a clear message to retry.
 - Q: Where may workflow traces be sent? → A: Use a local or external Langfuse destination; external export requires separate explicit opt-in.
 - Q: How long should permission to send sanitized traces to an external observability service last? → A: Until explicitly revoked or the destination changes.
+- Q: What if the upload widget rejects a very large file before application validation? → A: Allow a visible widget-level rejection; that file is not a submitted entry and has no application-level per-file outcome.
+- Q: How is external trace permission managed? → A: Use accessible in-app grant and revoke controls.
+- Q: What happens to unsent external traces on revocation or a destination change? → A: Discard them; already in-flight requests may complete and delivered data cannot be recalled.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -162,6 +165,16 @@ content without using a question-answering interface.
     **When** indexing or retrieval proceeds, **Then** a safe observability
     warning is reported without changing the operation's actual outcome or
     hiding an application failure.
+32. **Given** a file is rejected by the upload widget before application
+    submission, **When** the user selects it, **Then** a visible error explains
+    the rejection; the file is not a submitted entry and receives no application
+    indexing outcome. The user can correct the selection and submit again.
+33. **Given** an external trace destination, **When** the user uses the
+    keyboard and a screen reader, **Then** they can review the disclosure,
+    grant permission, see its state, and revoke it using in-app controls.
+34. **Given** external export is not authorized, **When** an operation runs,
+    **Then** no external trace is dispatched and the user can see that export
+    is disabled; that intentional state is not reported as a delivery failure.
 
 ### Edge Cases
 
@@ -195,6 +208,10 @@ content without using a question-answering interface.
   rejected for its count before per-file processing.
 - Files of exactly 10 MiB and batches of exactly 10 files meet the size and
   count limits; files or batches above those limits are rejected as specified.
+- A file rejected by the upload widget before application submission is not
+  included in the submitted batch. The widget-level error, not a per-entry
+  application result, explains that rejection; the framework's behavior for
+  other selected files must not be assumed without testing.
 
 ## Requirements *(mandatory)*
 
@@ -207,7 +224,11 @@ content without using a question-answering interface.
 - **FR-002**: The system MUST display each submitted filename and its processing
   status, including a final success or failure outcome. Outcomes MUST retain
   submission order and distinguish separate entries, even when filenames match
-  or the batch exceeds the file-count limit.
+  or the batch exceeds the file-count limit. A submitted entry is an entry
+  accepted by the upload widget and included in the snapshot at explicit
+  submission; a file rejected by the widget beforehand is not a submitted
+  entry. The view MUST visibly explain widget-level rejections and allow the
+  user to correct the selection; it MUST NOT present them as indexed.
 - **FR-003**: The system MUST reject empty files and unsupported file types
   with a per-file explanation.
 - **FR-004**: The system MUST parse accepted content, divide extractable text
@@ -260,7 +281,9 @@ content without using a question-answering interface.
   processing any file and show each file as rejected. For a batch of at most 10
   files, it MUST reject each file larger than 10 MiB (10,485,760 bytes) while
   processing the other files independently. Rejections MUST explain the
-  applicable limit.
+  applicable limit. These application outcomes apply to submitted entries as
+  defined in FR-002. The widget's transport limit MUST permit application-level
+  validation of a file at 10 MiB and one byte over it.
 - **FR-016**: Documentation MUST provide a procedure to remove the entire local
   knowledge base outside the application, including its indexed content and
   associated metadata.
@@ -308,7 +331,15 @@ content without using a question-answering interface.
   Each entered step and its parent operation MUST include an outcome and
   non-negative elapsed duration; record embedding model identity and usage
   details when available, without inventing unavailable values. A rejected or
-  failed operation MUST record only steps actually entered.
+  failed operation MUST record only steps actually entered. Regardless of
+  tracing availability, assign each submitted entry a distinct opaque,
+  non-content operation identifier before
+  batch validation; associate it with the corresponding ordered upload outcome
+  and, when available, its trace, including duplicate names and count rejections.
+  Retrieval callers MUST obtain a distinct opaque operation identifier before
+  invoking retrieval and pass it with the request; diagnostics use that same
+  identifier even for input errors or concurrent calls. Evidence records and
+  their list shape MUST remain unchanged.
 - **FR-026**: Traces and observability diagnostics MUST exclude document bytes
   and text, questions, filenames, file paths, embedding vectors, credentials,
   and raw exception details. Use non-content operation identifiers, controlled
@@ -318,10 +349,19 @@ content without using a question-answering interface.
   after disclosure of its identity and the data sent. This permission is
   separate from indexing consent, persists until revoked, and is invalidated
   when the destination changes.
-  The user MUST be able to revoke it. Export authorization MUST be checked at
-  dispatch; discard unsent queued traces after revocation or a destination
-  change. Previously transmitted data cannot be recalled. Local trace
-  destinations do not require external-export consent.
+  The application MUST provide keyboard-operable in-app controls and associated
+  screen-reader-readable text to review the disclosure, grant or revoke
+  permission, and inspect its state without relying on color alone.
+  A destination is local only when the complete delivery path and recipient
+  are established to remain on this computer, without external forwarding,
+  proxies, tunnels, or redirects; loopback alone is insufficient. Treat an
+  unknown or unverifiable delivery path as external. Local destinations do not
+  require external-export consent.
+  Coordinate authorization changes and dispatch across sessions and application
+  processes using that permission so that, once revocation or a destination
+  change takes effect, no new dispatch under the old permission starts and
+  unsent queued traces for it are discarded. Requests whose dispatch already
+  began may still complete; previously delivered data cannot be recalled.
 - **FR-027**: Missing or unavailable trace configuration and detected trace
   creation or delivery failures MUST produce a safe observability warning,
   separately from the indexing or retrieval outcome. Upload warnings MUST be
@@ -330,6 +370,11 @@ content without using a question-answering interface.
   the evidence result shape. Observability failures MUST NOT prevent core
   operations, alter their outcomes, or hide their errors.
   The system MUST NOT claim successful delivery without confirmation.
+  A configured external destination without opt-in is intentionally disabled:
+  show its disabled permission state, not a delivery-failure warning merely for
+  lack of authorization. Do not attempt delivery in that state. Missing
+  configuration, detected unavailability, and actual creation or delivery
+  failures remain safe warnings.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -338,7 +383,7 @@ content without using a question-answering interface.
 - **Knowledge chunk**: A portion of extracted document content, associated with
   a source filename and chunk identifier for retrieval and later citation.
 - **Upload result**: The per-file processing status and final success or failure
-  message associated with a submission.
+  message and opaque operation identifier associated with a submitted entry.
 
 ## Success Criteria *(mandatory)*
 
@@ -403,6 +448,10 @@ content without using a question-answering interface.
   progressing other filenames, preservation of committed evidence, and retry
   after completion, failure, and interruption. Inject an unexpected reservation
   error and check the validating-to-failed transition and unchanged knowledge.
+- Exercise the actual upload view at 10 MiB and one byte over, and above its
+  transport limit: verify the widget rejection is visible and excluded from
+  the application batch, and test its behavior with other selected files rather
+  than assuming they are submitted. Check correction and resubmission.
 - Use deterministic embedding and storage substitutes where appropriate so
   routine tests do not require live providers. Verify persistence behavior using
   a suitable local test environment.
@@ -413,8 +462,16 @@ content without using a question-answering interface.
   paths, vectors, credentials, and raw exception details. Use recognizable
   sentinel values for prohibited inputs and injected errors. Check external
   export is blocked before opt-in and after revocation or a destination change,
-  including for traces awaiting dispatch,
-  while local destinations do not require that opt-in. Inject trace creation
+  including for traces awaiting dispatch; coordinate a dispatch/revocation race
+  and verify that an already-started dispatch may complete. Check local and
+  unverifiable or forwarding destinations, including a loopback proxy; only
+  established end-to-end local delivery is exempt. Verify in-app disclosure,
+  permission state, grant and revocation with keyboard and screen reader.
+  Verify unauthorized export shows its disabled state without a delivery-failure
+  warning, while missing configuration and detected unavailability warn safely.
+  Verify distinct outcome-to-trace identifiers for duplicate entries and
+  count-rejected batches, and caller-to-diagnostic correlation for concurrent
+  retrievals and validation or application failures. Inject trace creation
   and delivery failures and verify safe warnings and unchanged core outcomes,
   including simultaneous application failure. Routine checks require no live
   observability service.

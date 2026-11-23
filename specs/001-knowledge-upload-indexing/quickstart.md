@@ -46,6 +46,10 @@ matrix.
 3. Submit an empty file, an unsupported file, a corrupt or no-text PDF, and a
    valid file in one within-limit batch. Confirm individual errors and the valid
    file's success. Test 10 and 11 files and 10 MiB and one byte over the limit.
+   Also select a file above the widget transport limit, alone and with other
+   files. Confirm the widget-level error, determine which entries actually reach
+   the submitted batch, and correct and resubmit; do not expect an application
+   result for a file the widget rejected before submission.
    For a file violating multiple validation rules, confirm that all applicable
    reasons are shown; an oversized batch is rejected for its count.
    Check clear per-file failures for undecodable text and encrypted PDFs,
@@ -71,10 +75,15 @@ matrix.
    copies.
 8. Use a keyboard and screen reader to access the upload view and identify each
    filename's textual status and errors without relying on color.
-9. Follow the implemented tracing setup to use a local destination, or
-   explicitly opt in after reviewing an external destination and its sanitized
-   trace data. Confirm the application reports unavailable tracing safely and
-   that revoking permission or changing the destination stops external export.
+9. Follow the implemented tracing setup to use an established end-to-end local
+   destination, or review the external destination and sanitized data and use
+   the in-app controls to grant and revoke permission. Exercise the disclosure,
+   permission state, and controls using keyboard and screen reader. A loopback
+   proxy alone does not establish a local destination. Confirm intentionally
+   disabled external export is shown as such, unavailable tracing is reported
+   safely, and revocation or destination change discards unsent queued traces
+   and stops new dispatches; already-started requests may finish and delivered
+   data cannot be recalled.
    A live Langfuse inspection is opt-in and must use non-sensitive sample data;
    do not claim remote delivery without confirmation.
 

@@ -55,7 +55,12 @@ OCR is outside this feature.
 session state support explicit batch submission and reruns. File uploader type
 filters are best-effort, not a security boundary: validate server-side. The
 framework's own upload limit can reject very large files before application
-validation; document and test that UI outcome as well as the exact 10 MiB rule.
+validation. The user accepted a visible widget-level rejection before submission,
+without an application per-entry outcome for that file. Set the transport limit
+above 10 MiB so the exact boundary can be validated by the application, and
+test real browser behavior, including other files selected alongside a rejected
+one; the documentation does not establish that the app receives a rejected
+file's name or metadata.
 Ensure the supported launch sets loopback explicitly because command-line and
 environment configuration can override project settings.
 
@@ -98,7 +103,12 @@ Sources: [Streamlit on PyPI](https://pypi.org/project/streamlit/),
 
 **Decision**: Plan Langfuse Python SDK 5.2.0 behind a small tracing interface,
 with per-file indexing and retrieval traces and a deterministic offline
-substitute. External trace export requires separate, revocable opt-in.
+substitute. External trace export requires separate, revocable opt-in through
+accessible in-app controls. Only an established end-to-end local destination
+is exempt; a loopback proxy alone is not proof. Discard unsent queued traces
+when permission is invalidated, while acknowledging in-flight dispatches may
+complete. Dispatch coordination and destination classification remain
+implementation and verification work, not demonstrated SDK behavior.
 
 **Rationale**: The constitution requires workflow traces. Stable step names,
 parent-child relationships, outcomes, and durations make failures diagnosable;
