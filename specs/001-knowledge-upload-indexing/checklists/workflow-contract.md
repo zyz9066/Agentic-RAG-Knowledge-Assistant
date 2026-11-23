@@ -21,9 +21,10 @@
 
 ## Requirement Clarity
 
-- [ ] CHK005 Is the meaning of the upload contract's input limits clear for over-limit submissions that must receive rejection outcomes? [Ambiguity, Contract §Upload submission, Spec §FR-015]
+- [x] CHK005 Is the meaning of the upload contract's input limits clear for over-limit submissions that must receive rejection outcomes? [Ambiguity, Contract §Upload submission, Spec §FR-015]
   - Review: The input is described as limited to ten files of at most 10 MiB, although the contract must also accept over-limit submissions for rejection.
   - Current review: Over-limit submissions are now accepted for rejection, but calling a batch processable only when every file is within the size limit conflicts with independent processing of other files in a mixed-size batch.
+  - Resolution: The contract now distinguishes count-wide rejection from per-file size rejection and permits other eligible files to proceed.
 - [x] CHK006 Are the allowed per-file status transitions and final states clear for validation, decoding, extraction, and storage failures? [Clarity, Contract §Upload submission, Spec §FR-007, Spec §FR-020]
   - Review: The lifecycle distinguishes validation rejection from processing failure, but does not assign undecodable text or encrypted PDF failures to either stage and final state.
   - Resolution: The contract assigns these input cases to rejection and extraction and storage failures to processing failure.
@@ -87,4 +88,33 @@
 
 ## Additional Scenario Coverage
 
-- [ ] CHK033 Are requirements for overlapping submissions replacing the same filename defined, or is simultaneous submission explicitly excluded? [Coverage, Gap, Spec §FR-009, Contract §Persistence]
+- [x] CHK033 Are requirements for overlapping submissions replacing the same filename defined, or is simultaneous submission explicitly excluded? [Coverage, Gap, Spec §FR-009, Contract §Persistence]
+  - Review: FR-023 and the contract reject conflicting attempts and preserve committed knowledge.
+
+## Concurrency Requirements
+
+- [x] CHK034 Is the point at which a same-name attempt becomes exclusive, and the winner when attempts reach it concurrently, defined without promising submission-order priority? [Clarity, Spec §FR-023, Contract §Upload submission]
+  - Review: Reservation follows validation; the first attempt to reserve proceeds, without a submission-order guarantee.
+- [x] CHK035 Are the scope of filename matching and coordination across knowledge bases, sessions, and application processes stated consistently? [Consistency, Spec §FR-023, Spec §Assumptions, Contract §Persistence]
+  - Review: Exact filenames are coordinated within the same knowledge base across sessions and processes.
+- [x] CHK036 Are the precedence and reported outcomes of batch limits, same-batch duplicates, per-file validation, and overlapping submissions sufficiently clear? [Coverage, Spec §FR-015, Spec §FR-018, Spec §FR-023]
+  - Review: Count rejection comes first, applicable per-file validation reasons follow, and only validated files reach overlap handling.
+- [x] CHK037 Are the outcome, retry guidance, and independence of other eligible filenames specified for a rejected overlap? [Completeness, Spec §FR-023, Spec §User Story 1]
+  - Review: FR-023 specifies rejection, a safe retry message, and independent outcomes for other eligible filenames.
+- [x] CHK038 Are release and retry requirements clear for successful, failed, and interrupted attempts, including the treatment of previously committed evidence? [Recovery, Spec §FR-019, Spec §FR-023, Contract §Persistence]
+  - Review: FR-019, FR-023, and the contract define retry availability and committed-data preservation around completion and interruption.
+- [ ] CHK039 Are the per-file outcome and status transition for an unexpected reservation error specified consistently with the other failure requirements? [Consistency, Gap, Spec §FR-007, Contract §Upload submission]
+  - Review: The contract specifies a failed outcome, but its lifecycle does not specify the transition when reservation fails before processing.
+
+## Observability Requirements
+
+- [ ] CHK040 Are meaningful ingestion and retrieval workflow steps identified for tracing, including the boundaries of this feature? [Completeness, Gap, Constitution §V, Plan §Constitution Check]
+  - Review: The constitution requires workflow traces, but the feature plan does not identify the in-scope ingestion and retrieval trace steps.
+- [ ] CHK041 Are trace status and latency requirements, and model or usage details when available, specified for the in-scope workflow steps? [Completeness, Gap, Constitution §V]
+  - Review: The constitution specifies these attributes generally; the feature artifacts do not apply them to identified workflow steps.
+- [x] CHK042 Are requirements for sensitive-data minimization in traces and diagnostics consistent with safe per-file errors and external-service consent? [Consistency, Constitution §II, Constitution §V, Spec §FR-007, Spec §FR-014]
+  - Review: The constitution requires secret exclusion and sensitive-data minimization, consistent with the safe-error and consent rules.
+- [ ] CHK043 Are observability failure handling and deterministic testability requirements defined without obscuring application failures or breaking core workflows? [Coverage, Gap, Constitution §IV, Constitution §V, Plan §Design and Verification]
+  - Review: The constitution sets general principles, but feature-specific handling of observability failures and offline verification are not defined.
+- [ ] CHK044 Are the expected trace evidence and privacy constraints sufficiently specific for objective acceptance without requiring a live observability service? [Measurability, Gap, Constitution §IV, Constitution §V, Spec §Verification]
+  - Review: The feature verification requirements do not identify expected trace evidence or an offline privacy check.
