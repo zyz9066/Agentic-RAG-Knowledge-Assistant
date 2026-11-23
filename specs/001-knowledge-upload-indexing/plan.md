@@ -108,13 +108,17 @@ only during implementation.
    and update visible per-file statuses. Validate count, size, extension, content,
    and duplicate names server-side; never trust the widget filter alone. Report
    all applicable per-file validation reasons within a permitted-size batch;
-   reject an oversized batch for count before per-file processing. Make the
-   upload view keyboard-operable and associate each filename with textual
+   reject an oversized batch for count before per-file processing. Preserve
+   distinct per-entry outcomes in submission order, including duplicate names
+   in over-limit batches. Make the upload view keyboard-operable and associate
+   each filename with textual
    status and error information accessible to screen readers without relying
    on color alone.
-2. Read UTF-8 text and extract PDF text with pypdf. Reject undecodable text and
-   empty, unreadable, corrupt, encrypted, and no-text inputs explicitly;
-   reject encrypted PDFs even if no password is required. Split with overlap
+2. Read UTF-8 text, removing an optional initial byte-order mark, and extract PDF
+   text with pypdf. Reject undecodable and marker-only text and encrypted PDFs
+   during validation, including PDFs requiring no password. Report corrupt
+   parsing, embedding, and storage errors as failed; report empty, unreadable,
+   and no-text inputs explicitly. Split with overlap
    using the embedding model's tokenizer and token limit, including special tokens;
    never silently truncate content during embedding. Retain document-relative
    order and optional PDF page numbers.
@@ -127,8 +131,10 @@ only during implementation.
 4. Compute all new chunks and vectors before opening a short SQLite write
    transaction. In the transaction, replace a filename's document and all
    chunks together, then commit. Roll back on failure. Validate vector
-   dimensions and embedding identity, and reject incompatible index/model
-   combinations instead of returning misleading results.
+   dimensions, embedding identity, and finite nonzero vectors; reject
+   incompatible or invalid embeddings instead of returning misleading results.
+   Rank by descending cosine similarity without relevance filtering or a
+   guaranteed tie order; scores are not calibrated relevance probabilities.
 5. Implement local embedding now. Define a provider capability contract for
    external processing and test consent with a recording fake; a production
    remote embedding integration is not required in Feature 001. If one is later
@@ -148,7 +154,9 @@ only during implementation.
    and after commit, restart persistence, local-only access, and the specified
    known-evidence retrieval example. Include
    an opt-in real-model test on the sample corpus; deterministic fakes alone do
-   not establish real semantic retrieval quality.
+   not establish real semantic retrieval quality. Include over-limit duplicate
+   entries, missing providers, empty or whitespace-only questions, invalid result
+   limits or embeddings, cosine ranking, and UTF-8 markers.
 8. Document setup, model download and offline limitations, `.env.example` with
    variable names only if external credentials are introduced later, local data
    removal, manual checks, and operational errors. Never commit secrets, local

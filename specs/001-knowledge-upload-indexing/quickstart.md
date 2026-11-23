@@ -12,7 +12,8 @@ fixtures, tests, and dependency lock.
 - The local embedding model may download on first use; prepare its configured
   cache in advance for offline use. The download fetches model files, not
   uploaded text. A missing model or failed download must produce a visible error.
-- Text files must be UTF-8; PDFs must be unencrypted and contain extractable
+- Text files must be UTF-8; an initial byte-order mark is removed, and a
+  marker-only file is rejected. PDFs must be unencrypted and contain extractable
   text. Retrieval targets English. Other languages may be uploaded, but their
   retrieval quality is not guaranteed.
 
@@ -53,7 +54,8 @@ CI must exercise the declared Python/platform matrix.
    Verify the fact, source filename, and chunk identifier, then restart the app
    with the same knowledge location and compatible embedding configuration and
    verify them again. Use the known-evidence example in [the specification](spec.md).
-   Consult the command's `--help` for the command's arguments.
+   Returned candidates for unrelated questions do not establish relevance or
+   answer sufficiency. Consult the command's `--help` for its arguments.
 6. Confirm that external-provider tests require disclosure and new consent per
    batch and make zero document-text calls without consent. Feature 001 defaults
    to local embeddings; no production external provider is required.

@@ -24,6 +24,10 @@ make their contents retrievable with source metadata.
 - Q: Which text-file encodings should the application accept? → A: Accept UTF-8 text files only; clearly reject files that cannot be decoded.
 - Q: What language support should the indexed knowledge base promise? → A: Target English; other languages may be uploaded, but retrieval quality is not guaranteed.
 - Q: How should the application handle encrypted PDF files? → A: Reject all encrypted PDFs, including those that open without a password.
+- Q: What should retrieval return when the knowledge base contains documents but none appear relevant to the question? → A: Return the highest-ranked chunks without claiming relevance; the later answer workflow judges sufficiency.
+- Q: How should a UTF-8 text file with an initial byte-order mark be handled? → A: Accept UTF-8 with or without an initial marker and remove that initial marker before indexing.
+- Q: What final status should be shown for undecodable text and encrypted PDFs? → A: Mark both as rejected; mark parsing, embedding, and storage errors as failed.
+- Q: How should retrieval handle a question containing only whitespace? → A: Reject empty or whitespace-only questions with an explicit input error.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -82,7 +86,8 @@ content without using a question-answering interface.
     another batch requires a new opt-in.
 12. **Given** a batch of more than 10 files, **When** it is submitted, **Then**
     the batch is rejected with a clear explanation, each file is shown as
-    rejected, and no files are processed.
+    rejected in submission order, including separately shown same-named entries,
+    and no files are processed.
 13. **Given** a batch of at most 10 files containing a file larger than 10 MiB,
     **When** it is submitted, **Then** that file is rejected with a clear
     explanation and the other files are processed independently.
@@ -106,16 +111,31 @@ content without using a question-answering interface.
     file is rejected with all applicable validation reasons and other valid
     files receive independent outcomes.
 19. **Given** a `.txt` file that cannot be decoded as UTF-8, **When** it is
-    submitted, **Then** the file is not indexed and the user sees a clear
-    per-file explanation.
+    submitted, **Then** it is marked rejected, is not indexed, and the user
+    sees a clear per-file explanation.
 20. **Given** a user consults the setup documentation, **When** they review
     language support, **Then** it states the English target and that retrieval
     quality in other languages is not guaranteed.
     **Given** an otherwise valid file in another language, **When** it is
     submitted, **Then** its language alone does not cause rejection.
 21. **Given** an encrypted PDF, including one that opens without a password,
-    **When** it is submitted, **Then** it is not indexed and the user sees a
-    clear per-file explanation.
+    **When** it is submitted, **Then** it is marked rejected, is not indexed,
+    and the user sees a clear per-file explanation.
+22. **Given** an indexed knowledge base and a valid unrelated question,
+    **When** evidence is requested, **Then** the highest-ranked available
+    chunks are returned without a claim that they are relevant or sufficient.
+23. **Given** a UTF-8 text file with an initial byte-order mark and non-empty
+    content, **When** it is indexed, **Then** the initial marker is removed and
+    its remaining content is available as evidence.
+24. **Given** an empty or whitespace-only question, **When** evidence is
+    requested, **Then** retrieval reports an explicit input error rather than
+    returning a successful empty result.
+25. **Given** the configured embedding provider is missing or unavailable,
+    **When** eligible files are submitted for indexing, **Then** each affected
+    file is marked failed with a safe explanation, no replacement is published,
+    and the system does not silently substitute another provider.
+26. **Given** a non-positive retrieval result limit, **When** evidence is
+    requested, **Then** retrieval reports an explicit input error.
 
 ### Edge Cases
 
@@ -126,6 +146,8 @@ content without using a question-answering interface.
   processing with a safe explanation.
 - A `.txt` file that cannot be decoded as UTF-8 fails with a clear per-file
   explanation rather than silently changing or discarding its content.
+- A UTF-8 file containing only an initial byte-order mark has no document text
+  and fails rather than being marked as indexed.
 - If two files with the same filename are submitted in one batch, both are
   rejected with an explanation so that replacement order is not ambiguous.
 - A failed indexing attempt must not leave partial new chunks available for
@@ -150,7 +172,9 @@ content without using a question-answering interface.
   `.pdf` files with extractable text. Support for `.md` files is desirable but
   not required.
 - **FR-002**: The system MUST display each submitted filename and its processing
-  status, including a final success or failure outcome.
+  status, including a final success or failure outcome. Outcomes MUST retain
+  submission order and distinguish separate entries, even when filenames match
+  or the batch exceeds the file-count limit.
 - **FR-003**: The system MUST reject empty files and unsupported file types
   with a per-file explanation.
 - **FR-004**: The system MUST parse accepted content, divide extractable text
@@ -160,11 +184,22 @@ content without using a question-answering interface.
   identifier sufficient to distinguish it within that document.
 - **FR-006**: The system MUST expose retrievable evidence for a relevant question,
   including the content and source metadata, without requiring a question-answering
-  UI.
+  UI. For a valid question and a positive result limit, retrieval returns the
+  lesser of that limit and the number of indexed chunks, ranked without a
+  relevance threshold; these candidates do not assert that the evidence is
+  relevant or sufficient.
+  An empty index returns no candidates. Empty or whitespace-only questions
+  and non-positive limits MUST produce an explicit input error. Evidence
+  sufficiency and abstention belong to the later answer workflow.
 - **FR-007**: The system MUST report validation, parsing, embedding, and storage
   failures for the affected file and MUST NOT label failed processing as success.
   Messages MUST NOT expose credentials, sensitive document content, or internal
-  implementation details.
+  implementation details. Undecodable text and encrypted PDFs MUST be marked
+  rejected; corrupt parsing, no-text PDF extraction, embedding, and storage
+  errors MUST be marked failed.
+  If the configured embedding provider is missing or unavailable, affected
+  eligible files MUST be marked failed with a safe explanation, without silently
+  substituting another provider or publishing partial results.
 - **FR-008**: Each file in a batch within the file-count limit MUST be processed
   independently; an error for one file MUST NOT prevent other valid files from
   reaching their own final outcome.
@@ -209,7 +244,9 @@ content without using a question-answering interface.
   new version retrievable after restart.
 - **FR-020**: The system MUST reject a `.txt` file that cannot be decoded as
   UTF-8 with a clear per-file explanation and MUST NOT silently alter or discard
-  undecodable content.
+  undecodable content. A UTF-8 file may contain an initial byte-order mark;
+  the system MUST remove that initial marker before indexing while retaining
+  the remaining text, and reject a marker-only file as having no document text.
 - **FR-021**: Documentation MUST state that retrieval targets English and that
   quality in other languages is not guaranteed. The system MUST NOT reject an
   otherwise valid file solely because its content is in another language.
@@ -275,7 +312,11 @@ content without using a question-answering interface.
   keyboard and screen-reader access to per-file statuses and errors. Cover
   files with overlapping validation violations and over-limit batch precedence.
   Check the documented language expectation and acceptance of otherwise valid
-  files regardless of content language.
+  files regardless of content language. Check empty-index and unrelated-question
+  retrieval without treating returned candidates as proof of relevance. Cover
+  empty and whitespace-only questions, non-positive result limits, a missing
+  provider, duplicate entries in oversized batches, and UTF-8 files with and
+  without an initial marker and marker-only files.
 - Use deterministic embedding and storage substitutes where appropriate so
   routine tests do not require live providers. Verify persistence behavior using
   a suitable local test environment.

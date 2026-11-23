@@ -20,7 +20,7 @@ commit. Filename is a label, not a path or an authority for filesystem access.
 | `document_id` | Required foreign key to a committed document. |
 | `chunk_id` | Identifier unique within the document, derived from ordered position. |
 | `text` | Non-empty extracted content. |
-| `embedding` | Finite float32 values matching the configured model dimension. |
+| `embedding` | Finite float32 values matching the configured model dimension, with nonzero vector magnitude. |
 | `page` | Optional source PDF page number when available. |
 
 Use a unique `(document_id, chunk_id)` key. Enable SQLite foreign-key
@@ -46,6 +46,8 @@ stored as standing permission.
 - The database records the embedding identity and dimension for the whole index.
   Refuse reads or writes on a mismatch and require a deliberate rebuild; do not
   silently mix embeddings from different models or revisions.
+- Reject non-finite or zero-magnitude query and chunk vectors rather than
+  producing undefined cosine similarity.
 - Chunk boundaries must fit the selected model's token limit, including special
   tokens, without silently truncating document text. Overlap must not leave
   gaps in the extracted text.
