@@ -112,16 +112,18 @@ only during implementation.
    upload view keyboard-operable and associate each filename with textual
    status and error information accessible to screen readers without relying
    on color alone.
-2. Read UTF-8 text and extract PDF text with pypdf. Reject empty, unreadable,
-   corrupt, encrypted, and no-text inputs explicitly. Split with overlap using
-   the embedding model's tokenizer and token limit, including special tokens;
+2. Read UTF-8 text and extract PDF text with pypdf. Reject undecodable text and
+   empty, unreadable, corrupt, encrypted, and no-text inputs explicitly;
+   reject encrypted PDFs even if no password is required. Split with overlap
+   using the embedding model's tokenizer and token limit, including special tokens;
    never silently truncate content during embedding. Retain document-relative
    order and optional PDF page numbers.
 3. Default to the local FastEmbed `BAAI/bge-small-en-v1.5` model. A first-use
    model download may require network access, but document text must not be sent
    for that download. Explain the download and cache; fail explicitly if model
-   files are unavailable. The model is English-oriented; do not promise
-   multilingual retrieval quality.
+   files are unavailable. Document the English retrieval target without promising
+   multilingual retrieval quality; do not reject otherwise valid files solely
+   because their content is in another language.
 4. Compute all new chunks and vectors before opening a short SQLite write
    transaction. In the transaction, replace a filename's document and all
    chunks together, then commit. Roll back on failure. Validate vector
@@ -138,8 +140,10 @@ only during implementation.
    assumption remains explicit. Document that the user must keep knowledge
    files in an unshared local location and is responsible for other services
    and system file sharing.
-7. Test validation boundaries, supported formats, corrupt/no-text PDFs, mixed
-   batches, overlapping validation reasons, duplicate names, progress,
+7. Test validation boundaries, undecodable text, encrypted PDFs with and without
+   a required password, supported formats, corrupt/no-text PDFs, mixed batches,
+   acceptance of otherwise valid non-English content, overlapping validation
+   reasons, duplicate names, progress,
    accessibility, consent, safe messages, atomic rollback, interruption before
    and after commit, restart persistence, local-only access, and the specified
    known-evidence retrieval example. Include

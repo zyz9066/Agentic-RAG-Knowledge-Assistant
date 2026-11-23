@@ -12,6 +12,9 @@ fixtures, tests, and dependency lock.
 - The local embedding model may download on first use; prepare its configured
   cache in advance for offline use. The download fetches model files, not
   uploaded text. A missing model or failed download must produce a visible error.
+- Text files must be UTF-8; PDFs must be unencrypted and contain extractable
+  text. Retrieval targets English. Other languages may be uploaded, but their
+  retrieval quality is not guaranteed.
 
 ## Automated checks
 
@@ -41,6 +44,8 @@ CI must exercise the declared Python/platform matrix.
    file's success. Test 10 and 11 files and 10 MiB and one byte over the limit.
    For a file violating multiple validation rules, confirm that all applicable
    reasons are shown; an oversized batch is rejected for its count.
+   Check clear per-file failures for undecodable text and encrypted PDFs,
+   including an encrypted PDF that opens without a password.
 4. Replace an indexed filename with different content. Verify only the new
    content is retrieved. Repeat with a deliberately failing replacement and
    verify that the previous content is still retrievable.

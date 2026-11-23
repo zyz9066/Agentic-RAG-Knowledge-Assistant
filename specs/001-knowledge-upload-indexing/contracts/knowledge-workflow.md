@@ -12,6 +12,11 @@ types are design targets for implementation, not existing code.
 - Each rejected file in a within-limit batch reports all applicable duplicate,
   empty-file, unsupported-type, and size validation reasons. Over-limit batches
   are rejected for count before per-file processing.
+- Text files must decode as UTF-8. Reject encrypted PDFs, including those that
+  open without a password. Report either failure with a safe per-file explanation.
+- Do not reject an otherwise valid file solely for its content language.
+  Documentation states the English retrieval target and does not guarantee
+  retrieval quality in other languages.
 - Filenames compare exactly, including case and extension. Treat filenames as
   untrusted labels, never as filesystem paths.
 - Lifecycle: `pending` -> `validating` -> `processing` -> `indexed` or `failed`;

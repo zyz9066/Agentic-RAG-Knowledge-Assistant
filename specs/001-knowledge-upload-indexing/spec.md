@@ -21,6 +21,9 @@ make their contents retrievable with source metadata.
 - Q: How should the application protect the local knowledge base from access through file sharing or other services? → A: Use an unshared local location; the user is responsible for system sharing and other services.
 - Q: What accessibility requirements should apply to upload statuses and errors? → A: Require text labels, keyboard access, and screen-reader access for status and errors.
 - Q: Within a permitted-size batch, what should a file's rejection message say when it violates multiple rules? → A: Report all applicable validation reasons for each rejected file.
+- Q: Which text-file encodings should the application accept? → A: Accept UTF-8 text files only; clearly reject files that cannot be decoded.
+- Q: What language support should the indexed knowledge base promise? → A: Target English; other languages may be uploaded, but retrieval quality is not guaranteed.
+- Q: How should the application handle encrypted PDF files? → A: Reject all encrypted PDFs, including those that open without a password.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -38,7 +41,8 @@ content without using a question-answering interface.
 
 **Acceptance Scenarios**:
 
-1. **Given** a supported non-empty text or PDF file with extractable text,
+1. **Given** a supported non-empty UTF-8 text file or unencrypted PDF with
+   extractable text,
    **When** the user submits it for indexing, **Then** its name and progress are
    displayed, its content is indexed as retrievable chunks with source metadata,
    and a success message is shown only after indexing completes.
@@ -101,13 +105,27 @@ content without using a question-answering interface.
     multiple validation rules, **When** the batch is submitted, **Then** that
     file is rejected with all applicable validation reasons and other valid
     files receive independent outcomes.
+19. **Given** a `.txt` file that cannot be decoded as UTF-8, **When** it is
+    submitted, **Then** the file is not indexed and the user sees a clear
+    per-file explanation.
+20. **Given** a user consults the setup documentation, **When** they review
+    language support, **Then** it states the English target and that retrieval
+    quality in other languages is not guaranteed.
+    **Given** an otherwise valid file in another language, **When** it is
+    submitted, **Then** its language alone does not cause rejection.
+21. **Given** an encrypted PDF, including one that opens without a password,
+    **When** it is submitted, **Then** it is not indexed and the user sees a
+    clear per-file explanation.
 
 ### Edge Cases
 
-- An empty, corrupt, encrypted, or image-only PDF that yields no extractable text
-  fails clearly rather than being marked as indexed.
+- An encrypted PDF fails clearly even if it opens without a password. An empty,
+  corrupt, or image-only PDF that yields no extractable text also fails clearly
+  rather than being marked as indexed.
 - A file with an allowed extension but unreadable or incompatible content fails
   processing with a safe explanation.
+- A `.txt` file that cannot be decoded as UTF-8 fails with a clear per-file
+  explanation rather than silently changing or discarding its content.
 - If two files with the same filename are submitted in one batch, both are
   rejected with an explanation so that replacement order is not ambiguous.
 - A failed indexing attempt must not leave partial new chunks available for
@@ -128,8 +146,9 @@ content without using a question-answering interface.
 ### Functional Requirements
 
 - **FR-001**: The system MUST allow one or more files to be submitted through a
-  knowledge-upload view and MUST accept `.txt` and `.pdf` files. Support for
-  `.md` files is desirable but not required.
+  knowledge-upload view and MUST accept UTF-8 `.txt` files and unencrypted
+  `.pdf` files with extractable text. Support for `.md` files is desirable but
+  not required.
 - **FR-002**: The system MUST display each submitted filename and its processing
   status, including a final success or failure outcome.
 - **FR-003**: The system MUST reject empty files and unsupported file types
@@ -188,6 +207,14 @@ content without using a question-answering interface.
   no partial new chunks retrievable after restart and MUST preserve any
   previously committed version. A completed commit MUST leave the complete
   new version retrievable after restart.
+- **FR-020**: The system MUST reject a `.txt` file that cannot be decoded as
+  UTF-8 with a clear per-file explanation and MUST NOT silently alter or discard
+  undecodable content.
+- **FR-021**: Documentation MUST state that retrieval targets English and that
+  quality in other languages is not guaranteed. The system MUST NOT reject an
+  otherwise valid file solely because its content is in another language.
+- **FR-022**: The system MUST reject encrypted PDFs, including those that open
+  without a password, with a clear per-file explanation.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -221,7 +248,10 @@ content without using a question-answering interface.
 
 - A filename match means the complete displayed filename matches exactly,
   including case and extension. Files with different names are separate documents.
-- A PDF must contain extractable text; extracting text from images is not required.
+- A PDF must be unencrypted and contain extractable text; extracting text from
+  images is not required.
+- Retrieval targets English; accepting another language does not guarantee its
+  retrieval quality.
 - The configured knowledge base is for one user on their own computer;
   authentication and per-user access control are outside this feature.
 - The user controls the operating system and other services and keeps the
@@ -235,13 +265,17 @@ content without using a question-answering interface.
 ## Verification
 
 - Automated checks cover valid, empty, unsupported, corrupt, and unprocessable
-  files; chunk creation and source metadata; known-evidence retrieval; mixed
+  files, including `.txt` files that are not decodable as UTF-8 and encrypted
+  PDFs with and without a required password; chunk creation and source metadata;
+  known-evidence retrieval; mixed
   batches; replacement success, failure, and interruption before and after
   commit; persistence across restart; and
   upload count and size boundaries. Check local-only access, external-service
   disclosure and per-batch opt-in, documented knowledge-base removal, and
   keyboard and screen-reader access to per-file statuses and errors. Cover
   files with overlapping validation violations and over-limit batch precedence.
+  Check the documented language expectation and acceptance of otherwise valid
+  files regardless of content language.
 - Use deterministic embedding and storage substitutes where appropriate so
   routine tests do not require live providers. Verify persistence behavior using
   a suitable local test environment.
