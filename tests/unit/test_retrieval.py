@@ -3,7 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from app.retrieval import RetrievalError, new_operation_id, retrieve
+from app.observability import RecordingTraceSink, TraceDiagnosticChannel, WorkflowTracer
+from app.retrieval import (
+    RetrievalError,
+    get_diagnostics,
+    new_operation_id,
+    retrieve,
+)
 from app.storage import Chunk, SQLiteKnowledgeStore
 
 
@@ -107,3 +113,68 @@ def test_missing_or_failing_provider_is_not_an_empty_success(
     with pytest.raises(RetrievalError) as error:
         retrieve(store, BrokenEmbeddings(), "question", 1, new_operation_id())
     assert "sensitive provider detail" not in str(error.value)
+
+
+def test_diagnostics_correlate_errors_without_changing_results(
+    store: SQLiteKnowledgeStore,
+) -> None:
+    operation_id = new_operation_id()
+    with pytest.raises(RetrievalError):
+        retrieve(store, Embeddings(), "  ", 2, operation_id)
+    diagnostic = get_diagnostics(operation_id)
+    assert len(diagnostic) == 1
+    assert diagnostic[0].code == "invalid_input"
+    assert (
+        diagnostic[0].message
+        == "A question, positive result limit, and operation ID are required."
+    )
+
+
+def test_concurrent_diagnostics_keep_operation_ids_separate(
+    store: SQLiteKnowledgeStore,
+) -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    identifiers = [new_operation_id(), new_operation_id()]
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [
+            executor.submit(retrieve, store, Embeddings(), question, 1, identifier)
+            for question, identifier in zip(["", "  "], identifiers)
+        ]
+        for future in futures:
+            with pytest.raises(RetrievalError):
+                future.result()
+    assert all(
+        [item.operation_id for item in get_diagnostics(identifier)] == [identifier]
+        for identifier in identifiers
+    )
+
+
+def test_retrieval_trace_contains_steps_but_not_question_or_evidence(
+    store: SQLiteKnowledgeStore,
+) -> None:
+    store.replace(
+        "secret-name.txt",
+        "test-model",
+        [Chunk("0", "PRIVATE_EVIDENCE", (1.0, 0.0), None)],
+    )
+    sink = RecordingTraceSink()
+    tracer = WorkflowTracer(sink, TraceDiagnosticChannel())
+    identifier = new_operation_id()
+    evidence = retrieve(
+        store,
+        Embeddings(),
+        "PRIVATE_QUESTION",
+        1,
+        identifier,
+        tracer=tracer,
+    )
+    assert evidence[0].text == "PRIVATE_EVIDENCE"
+    assert [step.name for step in sink.records[0].steps] == [
+        "input-validation",
+        "query-embedding",
+        "evidence-lookup-ranking",
+    ]
+    assert "PRIVATE_QUESTION" not in repr(sink.records[0])
+    assert "PRIVATE_EVIDENCE" not in repr(sink.records[0])
+    assert "secret-name.txt" not in repr(sink.records[0])

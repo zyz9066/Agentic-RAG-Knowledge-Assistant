@@ -17,6 +17,11 @@ class AppConfig:
     trace_secret_key: str | None = field(repr=False)
 
 
+def is_loopback_bind(address: str | None) -> bool:
+    """Accept only the explicit IPv4 loopback address for the local UI."""
+    return address == "127.0.0.1"
+
+
 def _value(values: Mapping[str, str], name: str, default: str) -> str:
     value = values.get(name, default).strip()
     if not value:

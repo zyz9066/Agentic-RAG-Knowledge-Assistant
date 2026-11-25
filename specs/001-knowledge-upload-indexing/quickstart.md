@@ -1,8 +1,6 @@
 # Quickstart and Validation: Knowledge Upload and Indexing
 
-These commands and paths describe the **planned implementation**, not files
-that exist yet. Run them after `/speckit-implement` creates the application,
-fixtures, tests, and dependency lock.
+These commands and paths describe the implemented Feature 001 workflow.
 
 ## Prerequisites and setup
 
@@ -22,8 +20,8 @@ fixtures, tests, and dependency lock.
 From the repository root after implementation:
 
 ```powershell
-uv run --locked ruff check .
-uv run --locked ruff format --check .
+uv run --locked ruff check app tests
+uv run --locked ruff format --check app tests
 uv run --locked pyright
 uv run --locked pytest
 ```
@@ -38,9 +36,9 @@ matrix.
 
 ## Manual upload and retrieval
 
-1. Start the app using the documented supported launcher with its explicit
-   loopback binding. Confirm the effective address is `127.0.0.1`; unsafe
-   overrides must fail closed.
+1. Start the app with `.\run.ps1`, which supplies the explicit loopback binding.
+   Confirm the effective address is `127.0.0.1`; unsafe overrides must fail
+   closed.
 2. Upload original or public-domain text and PDF sample files containing known
    facts. Confirm the filename, progress, and success for each.
 3. Submit an empty file, an unsupported file, a corrupt or no-text PDF, and a
@@ -60,7 +58,8 @@ matrix.
    in progress, submit the same filename from another session or process;
    verify rejection with a retry message, then retry after the first finishes.
    Confirm unrelated eligible files in the later batch still proceed.
-5. Use the implemented local retrieval-check command against a known question.
+5. Use `uv run --locked python -m app.retrieval_check --help` and run the local
+   retrieval-check command against a known question.
    Verify the fact, source filename, and chunk identifier, then restart the app
    with the same knowledge location and compatible embedding configuration and
    verify them again. Use the known-evidence example in [the specification](spec.md).
@@ -69,8 +68,8 @@ matrix.
 6. Confirm that external-provider tests require disclosure and new consent per
    batch and make zero document-text calls without consent. Feature 001 defaults
    to local embeddings; no production external provider is required.
-7. Stop the application and follow the implemented README's exact local
-   knowledge-base removal procedure. Restart and confirm that the removed
+7. Stop the application and follow the README's exact local knowledge-base
+   removal procedure. Restart and confirm that the removed
    knowledge is no longer retrievable. This does not erase backups or remote
    copies.
 8. Use a keyboard and screen reader to access the upload view and identify each
@@ -98,3 +97,27 @@ the application's local-only access restrictions do not control those services.
 
 For behavior and evidence shapes, see [the workflow contract](contracts/knowledge-workflow.md)
 and [data model](data-model.md).
+
+## Validation record
+
+The local offline suite passed with 89 tests and one opt-in real-model test
+skipped; the opt-in real-model known-evidence test was then run separately and
+passed. Ruff lint and formatting checks and Pyright passed on Windows 11 with
+Python 3.13.18. The Windows/Linux Python matrix is configured in CI but has not
+yet completed in GitHub Actions.
+
+One local sample-corpus timing run indexed both sample files (748 input bytes,
+two chunks) using the configured FastEmbed model. Model initialization,
+including the first model-file download, took 5.929 seconds; indexing after
+initialization took 0.112 seconds; one known-question retrieval took 0.010
+seconds and returned the known observatory evidence. This single small-corpus
+measurement is environment-specific and is not a performance target or a
+retrieval-quality guarantee.
+
+The supported launcher was opened in a local browser at `127.0.0.1`; its
+accessible page snapshot exposed the headings, upload region, file-upload
+control, and submit button. Keyboard Tab navigation reached the file-upload and
+submit controls. No file was uploaded during this browser check. Actual
+transport-boundary and mixed-selection behavior, browser resubmission, and a
+screen-reader walkthrough remain unverified; do not infer their behavior from
+AppTest or this no-upload browser check.

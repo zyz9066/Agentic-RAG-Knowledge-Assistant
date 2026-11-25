@@ -15,6 +15,7 @@ from app.ingestion import (
     new_upload_batch,
     process_batch,
 )
+from app.observability import RecordingTraceSink, TraceDiagnosticChannel, WorkflowTracer
 from app.storage import Chunk, SQLiteKnowledgeStore
 
 
@@ -149,6 +150,38 @@ def test_missing_provider_fails_without_losing_committed_data(tmp_path: Path) ->
     assert [item.text for item in store.read_chunks("test-model", 2)] == ["old"]
 
 
+def test_provider_factory_is_lazy_and_loaded_only_once(
+    tmp_path: Path,
+) -> None:
+    store = SQLiteKnowledgeStore(tmp_path / "knowledge.sqlite3")
+    calls = 0
+
+    def create_provider() -> LocalProvider:
+        nonlocal calls
+        calls += 1
+        return LocalProvider()
+
+    rejected = process_batch(
+        new_upload_batch([UploadEntry("empty.txt", b"")]),
+        store,
+        None,
+        provider_factory=create_provider,
+    )
+    assert rejected[0].status == "rejected"
+    assert calls == 0
+
+    indexed = process_batch(
+        new_upload_batch(
+            [UploadEntry("one.txt", b"one"), UploadEntry("two.txt", b"two")]
+        ),
+        store,
+        None,
+        provider_factory=create_provider,
+    )
+    assert [result.status for result in indexed] == ["indexed", "indexed"]
+    assert calls == 1
+
+
 def test_reservation_errors_fail_before_processing_and_do_not_stop_batch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -226,3 +259,36 @@ def test_validation_status_is_reported_before_validation_runs(
         on_status=lambda item: statuses.append(item.status),
     )[0]
     assert result.status == "failed"
+
+
+def test_upload_tracing_correlates_each_entry_without_content(
+    tmp_path: Path,
+) -> None:
+    store = SQLiteKnowledgeStore(tmp_path / "knowledge.sqlite3")
+    sink = RecordingTraceSink()
+    tracer = WorkflowTracer(sink, TraceDiagnosticChannel())
+    batch = new_upload_batch(
+        [
+            UploadEntry("PRIVATE_FILENAME.txt", b"PRIVATE_DOCUMENT_SENTINEL"),
+            UploadEntry("empty.txt", b""),
+        ]
+    )
+    results = process_batch(batch, store, LocalProvider(), tracer=tracer)
+    assert [result.status for result in results] == ["indexed", "rejected"]
+    assert {record.operation_id for record in sink.records} == set(batch.operation_ids)
+    indexed = next(
+        record
+        for record in sink.records
+        if record.operation_id == batch.operation_ids[0]
+    )
+    assert [step.name for step in indexed.steps] == [
+        "validation",
+        "reservation",
+        "parsing",
+        "chunking",
+        "embedding",
+        "storage",
+    ]
+    serialized = repr(sink.records)
+    assert "PRIVATE_FILENAME.txt" not in serialized
+    assert "PRIVATE_DOCUMENT_SENTINEL" not in serialized

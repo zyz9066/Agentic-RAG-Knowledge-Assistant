@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@v6
+      - name: Install locked dependencies
+        run: uv sync --locked --all-groups
+      - name: Check Ruff lint
+        run: uv run --locked ruff check app tests
+      - name: Check Ruff formatting
+        run: uv run --locked ruff format --check app tests
+      - name: Type-check
+        run: uv run --locked pyright
+      - name: Run offline tests
+        run: uv run --locked pytest
