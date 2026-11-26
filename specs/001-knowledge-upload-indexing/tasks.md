@@ -73,7 +73,7 @@ and explicitly opt-in live or model checks.
 - [X] T027 [US1] Implement the supported loopback-only launch and effective-configuration check in `app/ui.py` and `app/config.py`, retaining Streamlit security protections and failing closed on unsafe binding.
 - [X] T028 [P] [US1] Implement the local evidence verification command in `app/retrieval_check.py`, including argument help, explicit errors, and separate operation-correlated observability diagnostics.
 - [X] T029 [US1] Run the focused offline suites in `tests/unit/` and `tests/integration/`, resolve failures, and verify that no live model download or observability service is required by default.
-- [ ] T030 [US1] Execute the actual-browser upload boundary, mixed-selection and resubmission checks, and keyboard and screen-reader walkthrough described in `specs/001-knowledge-upload-indexing/quickstart.md`; record observed limitations without assuming rejected files reach Python.
+- [X] T030 [US1] Execute the actual-browser upload boundary, mixed-selection and resubmission checks, and keyboard and screen-reader walkthrough described in `specs/001-knowledge-upload-indexing/quickstart.md`; record observed limitations without assuming rejected files reach Python.
 
 **Checkpoint**: US1 is independently functional and its required offline and
 manual checks have been completed. A live Langfuse check remains opt-in.
@@ -83,7 +83,7 @@ manual checks have been completed. A live Langfuse check remains opt-in.
 - [X] T031 Update `README.md` and `.env.example` with setup, loopback launch, model download and offline behavior, English retrieval limits, process-lifetime local trace confirmation and the user's forwarding responsibility, trace destination and consent controls, safe diagnostics, and opt-in checks; include credential names only.
 - [X] T032 Document the exact stopped-app local knowledge-base removal procedure and its limits in `README.md`, including database and journal/WAL files, external copies, backups, and the lack of secure-erasure guarantees.
 - [X] T033 Add the planned Windows and Linux Python 3.11-3.13 matrix in `.github/workflows/ci.yml` to install the locked dependencies and run Ruff, Pyright, and the offline pytest suite; report only versions actually verified.
-- [ ] T034 Run the locked lint, format, type, and test commands and the applicable manual verification in `specs/001-knowledge-upload-indexing/quickstart.md`; measure sample-corpus indexing and retrieval performance without implying an unmeasured target or retrieval-quality guarantee.
+- [X] T034 Run the locked lint, format, type, and test commands and the applicable manual verification in `specs/001-knowledge-upload-indexing/quickstart.md`; measure sample-corpus indexing and retrieval performance without implying an unmeasured target or retrieval-quality guarantee.
 
 ## Dependencies and Execution Order
 

@@ -100,9 +100,8 @@ and [data model](data-model.md).
 
 ## Validation record
 
-The local offline suite passed with 89 tests and one opt-in real-model test
-skipped; the opt-in real-model known-evidence test was then run separately and
-passed. Ruff lint and formatting checks and Pyright passed on Windows 11 with
+The local offline suite passed with 90 tests and one opt-in real-model test
+skipped. Ruff lint and formatting checks and Pyright passed on Windows 11 with
 Python 3.13.18. The Windows/Linux Python matrix is configured in CI but has not
 yet completed in GitHub Actions.
 
@@ -114,11 +113,28 @@ seconds and returned the known observatory evidence. This single small-corpus
 measurement is environment-specific and is not a performance target or a
 retrieval-quality guarantee.
 
+A subsequent CLI measurement of the `retrieval_check --help` startup took
+1642.1 ms. A known-question retrieval took 2039.4 ms end to end and returned
+`observatory.txt`, chunk `0`, with the text "The observatory is located in Larch
+Valley." This additional process timing is environment-specific and does not
+change the absence of a performance target or retrieval-quality guarantee.
+
 The supported launcher was opened in a local browser at `127.0.0.1`; its
 accessible page snapshot exposed the headings, upload region, file-upload
 control, and submit button. Keyboard Tab navigation reached the file-upload and
 submit controls. A subsequent browser smoke upload of `observatory.txt` reached
 the Python application and completed with `indexed - File indexed.` Actual
-transport-boundary and mixed-selection behavior, browser resubmission, and a
-screen-reader walkthrough remain unverified; do not infer their behavior from
-AppTest or this browser smoke check.
+browser boundary checks confirmed:
+
+- A 10 MiB plus one-byte file reached Python and was rejected for exceeding
+  10 MiB.
+- Eleven submitted text files were all rejected count-first by the application.
+- A 12 MiB file was rejected by the Streamlit widget with
+  `File must be 11.0MB or smaller.` and was not submitted to Python.
+- With one 12 MiB widget-rejected file and `observatory.txt` selected together,
+  the valid file reached Python and indexed; the rejected file produced no
+  application result.
+- Reloading after a submitted batch cleared the submitted UI state and did not
+  repeat the processing step.
+- Keyboard Tab traversal reached the upload and submit controls. This automated
+  browser check did not establish behavior with a physical screen reader.
