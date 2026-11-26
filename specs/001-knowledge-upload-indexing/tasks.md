@@ -85,6 +85,12 @@ manual checks have been completed. A live Langfuse check remains opt-in.
 - [X] T033 Add the planned Windows and Linux Python 3.11-3.13 matrix in `.github/workflows/ci.yml` to install the locked dependencies and run Ruff, Pyright, and the offline pytest suite; report only versions actually verified.
 - [X] T034 Run the locked lint, format, type, and test commands and the applicable manual verification in `specs/001-knowledge-upload-indexing/quickstart.md`; measure sample-corpus indexing and retrieval performance without implying an unmeasured target or retrieval-quality guarantee.
 
+## Phase 5: Convergence
+
+- [ ] T035 Perform a physical keyboard and screen-reader walkthrough in the rendered upload, status, and trace-permission controls and record observed results or limitations per FR-017, SC-005, and US1/AC16 (partial).
+- [X] T036 Complete and record the remaining manual verification cases in `specs/001-knowledge-upload-indexing/quickstart.md`, including corrupt/no-text PDFs, replacement success and failure, interruption/restart behavior, undecodable text, and encrypted PDFs per US1/AC4, US1/AC7, US1/AC17, US1/AC19-21 and SC-004 (partial).
+- [X] T037 Obtain executable Windows/Linux Python 3.11-3.13 CI matrix evidence or document explicitly which matrix entries remain uncompleted, and revise verification claims under the plan: CI matrix decision and Constitution IV (partial).
+
 ## Dependencies and Execution Order
 
 ### Phase dependencies

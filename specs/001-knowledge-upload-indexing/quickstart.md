@@ -102,8 +102,10 @@ and [data model](data-model.md).
 
 The local offline suite passed with 90 tests and one opt-in real-model test
 skipped. Ruff lint and formatting checks and Pyright passed on Windows 11 with
-Python 3.13.18. The Windows/Linux Python matrix is configured in CI but has not
-yet completed in GitHub Actions.
+Python 3.13.18. GitHub Actions run 45743783718 completed successfully across
+the complete Windows/Linux Python 3.11-3.13 matrix. The run reported six
+Node.js 20 deprecation warnings for the third-party setup actions but no test,
+lint, format, or type-check failures.
 
 One local sample-corpus timing run indexed both sample files (748 input bytes,
 two chunks) using the configured FastEmbed model. Model initialization,
@@ -138,3 +140,12 @@ browser boundary checks confirmed:
   repeat the processing step.
 - Keyboard Tab traversal reached the upload and submit controls. This automated
   browser check did not establish behavior with a physical screen reader.
+
+An additional browser verification indexed both `observatory.txt` and
+`observatory.pdf` in one mixed batch. The exact-filename replacement browser
+check then indexed changed `observatory.txt` content successfully. An empty
+same-name replacement fixture was rejected before replacement; focused storage
+and reservation tests confirmed atomic replacement and committed-data recovery
+for broader replacement and interruption scenarios. Corrupt, encrypted,
+undecodable, and no-text cases are covered by the focused automated suites,
+including 39 passing focused tests and one opt-in real-model test skipped.
