@@ -109,6 +109,33 @@ def test_unsupported_upload_is_rejected_without_loading_the_model(
     assert StubLocalEmbeddings.instances == []
 
 
+def test_mixed_upload_shows_independent_statuses_and_can_be_resubmitted(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    knowledge_dir = _set_local_app_environment(monkeypatch, tmp_path)
+    StubLocalEmbeddings.instances.clear()
+    monkeypatch.setattr(embeddings, "LocalEmbeddings", StubLocalEmbeddings)
+
+    app = AppTest.from_file(str(_APP)).run()
+    app.file_uploader[0].upload("facts.csv", b"unsupported evidence")
+    app.file_uploader[0].upload("facts.txt", b"supported evidence")
+    app.button(key="submit_uploads").click().run()
+
+    assert not app.exception
+    rendered = "\n".join(_rendered_text(app))
+    assert "facts.csv: rejected" in rendered
+    assert "facts.txt: indexed" in rendered
+
+    store = SQLiteKnowledgeStore(knowledge_dir / "knowledge.sqlite3")
+    assert [chunk.text for chunk in store.read_chunks("test-embedding-v1", 16)] == [
+        "supported evidence"
+    ]
+
+    app.run()
+    assert not app.exception
+    assert "facts.txt: indexed" in "\n".join(_rendered_text(app))
+
+
 def test_external_indexing_has_no_consent_after_a_streamlit_rerun(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

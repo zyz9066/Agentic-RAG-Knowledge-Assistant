@@ -117,7 +117,8 @@ retrieval-quality guarantee.
 The supported launcher was opened in a local browser at `127.0.0.1`; its
 accessible page snapshot exposed the headings, upload region, file-upload
 control, and submit button. Keyboard Tab navigation reached the file-upload and
-submit controls. No file was uploaded during this browser check. Actual
+submit controls. A subsequent browser smoke upload of `observatory.txt` reached
+the Python application and completed with `indexed - File indexed.` Actual
 transport-boundary and mixed-selection behavior, browser resubmission, and a
 screen-reader walkthrough remain unverified; do not infer their behavior from
-AppTest or this no-upload browser check.
+AppTest or this browser smoke check.
