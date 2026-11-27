@@ -32,6 +32,12 @@ response when evidence is insufficient.
 - Q: If the local answer model is not installed, how should the application
   obtain it? A: Require manual model setup; show a clear error and setup
   guidance instead of automatically downloading it.
+- Q: How should citations behave when a source is replaced during or after
+  question processing? A: Do not show affected claims as current; warn that the
+  source changed and ask the user to rerun the question.
+- Q: When should the application check already displayed answers for changed
+  sources? A: On the next app interaction or rerun; an idle view may be stale
+  and must disclose that limitation.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -101,6 +107,15 @@ isolation with deterministic substitutes.
 15. **Given** the local answer model is not installed or available, **When**
     the user submits a question, **Then** the app reports the problem and
     provides setup guidance without automatically downloading a model.
+16. **Given** a cited source is replaced before an answer is published,
+    **When** publication checks the source, **Then** affected claims are not
+    displayed as current, the user is warned, and a new question submission is
+    requested.
+17. **Given** a cited source changes after an answer is displayed, **When** the
+    user next interacts with the app or the app reruns, **Then** affected claims
+    are no longer displayed as current, a warning is shown, and the user is
+    asked to rerun the question. The view discloses that an idle answer can be
+    stale until the next interaction or rerun.
 
 ### Edge Cases
 
@@ -121,6 +136,9 @@ isolation with deterministic substitutes.
   a source cannot be established, that source's metadata must not be exported.
 - A source with a familiar filename may have been replaced with different
   content; matching the name alone does not establish trace eligibility.
+- A source can be replaced while an answer is being generated or after it is
+  displayed. Check before publication and again on the next app interaction or
+  rerun; an idle display can remain stale until that check occurs.
 
 ## Requirements *(mandatory)*
 
@@ -134,7 +152,11 @@ isolation with deterministic substitutes.
   retrieval behavior without rebuilding or weakening Feature 001's upload,
   indexing, retrieval, privacy, or consent guarantees.
 - **FR-004**: The system MUST preserve exact source filename and chunk
-  identifiers from retrieved evidence through the displayed references.
+  identifiers from retrieved evidence through the displayed references. Check
+  source identity and content for changes before publication and on each
+  subsequent app interaction or rerun. If a cited source has changed, do not
+  present affected claims as current; warn the user and request a new question
+  submission. Disclose that an idle view may be stale until the next check.
 - **FR-005**: The answering workflow MUST use CrewAI, with explicit agent and
   task inputs and outcomes and bounded execution, to retrieve evidence, produce
   an answer, and verify it against the evidence.
@@ -252,6 +274,10 @@ isolation with deterministic substitutes.
   when the destination is authorized, and that ordinary questions, unselected
   examples, same-named sources with different content, unrelated sources,
   document text, and credentials remain excluded.
+- **SC-008**: Deterministic checks replace a cited source before publication
+  and after display. In both cases the next required check removes affected
+  claims from the current answer and warns the user to resubmit; the view
+  discloses the idle-view limitation.
 
 ## Assumptions
 
