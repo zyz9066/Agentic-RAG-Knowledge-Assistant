@@ -17,67 +17,78 @@ reviewed and satisfied; it does not mean implementation work is complete.
 
 ## Requirement Completeness
 
-- [ ] CHK001 Are requirements for answerable, partially answerable, unanswerable, and conflicting-evidence questions defined as distinct outcomes? [Completeness, Spec §FR-008–FR-011]
-- [ ] CHK002 Are claim-level support and source-reference requirements defined for answers that combine information from multiple chunks or documents? [Completeness, Spec §FR-004, §FR-008–FR-010]
-- [ ] CHK003 Are permitted and prohibited trace fields specified separately for ordinary questions, selected evaluation cases, and existing indexing and retrieval operations? [Completeness, Spec §FR-015–FR-017, §FR-021–FR-022]
+- [x] CHK001 Are requirements for answerable, partially answerable, unanswerable, and conflicting-evidence questions defined as distinct outcomes? [Completeness, Spec §FR-008–FR-011]
+- [x] CHK002 Are claim-level support and source-reference requirements defined for answers that combine information from multiple chunks or documents? [Completeness, Spec §FR-004, §FR-008–FR-010]
+- [x] CHK003 Are permitted and prohibited trace fields specified separately for ordinary questions, selected evaluation cases, and existing indexing and retrieval operations? [Completeness, Spec §FR-015–FR-017, §FR-021–FR-022]
 - [ ] CHK004 Are the disclosure, example selection, and independently required destination authorization requirements complete for contentful evaluation traces? [Completeness, Spec §FR-021–FR-022]
-- [ ] CHK005 Are distinct user-facing outcomes specified for blank input, an empty knowledge base, processing failures, and unavailable tracing? [Completeness, Spec §FR-002, §FR-011, §FR-013, §FR-016]
-- [ ] CHK006 Are preservation requirements explicit for existing upload, replacement, retrieval, privacy, and consent behavior? [Completeness, Spec §FR-003, Feature 001 contract §Retrieval, §Observability, §Persistence]
+  - Finding: Selection and disclosure are specified, but whether existing destination authorization covers the additional fields remains unresolved; see CHK017.
+- [x] CHK005 Are distinct user-facing outcomes specified for blank input, an empty knowledge base, processing failures, and unavailable tracing? [Completeness, Spec §FR-002, §FR-011, §FR-013, §FR-016]
+- [x] CHK006 Are preservation requirements explicit for existing upload, replacement, retrieval, privacy, and consent behavior? [Completeness, Spec §FR-003, Feature 001 contract §Retrieval, §Observability, §Persistence]
 
 ## Requirement Clarity
 
 - [ ] CHK007 Are the criteria for a claim being supported, unsupported, or indeterminate sufficiently clear for consistent review, including when evidence is incomplete or contradictory? [Clarity, Spec §FR-008–FR-010]
-- [ ] CHK008 Are citation identity, claim-to-source association, and the treatment of ambiguous or non-retrieved references specified unambiguously? [Clarity, Spec §FR-004, §FR-009]
-- [ ] CHK009 Is the meaning of a changed source clear for identical-content replacement, changed content, missing sources, and failed replacement? [Clarity, Spec §FR-004, Contract §Source replacement and publication]
+  - Finding: The outcomes are named, but the criteria for classifying support and resolving contradictory evidence are not defined for consistent review.
+- [x] CHK008 Are citation identity, claim-to-source association, and the treatment of ambiguous or non-retrieved references specified unambiguously? [Clarity, Spec §FR-004, §FR-009]
+- [x] CHK009 Is the meaning of a changed source clear for identical-content replacement, changed content, missing sources, and failed replacement? [Clarity, Spec §FR-004, Contract §Source replacement and publication]
 - [ ] CHK010 Is the boundary of “next app interaction or rerun” clear for edits, navigation, keyboard and pointer interactions, and idle views? [Ambiguity, Spec §FR-004, Contract §Submission and UI]
-- [ ] CHK011 Are the conditions for local-only answer generation and the trusted runtime boundary clear enough to distinguish a local service from a forwarding or remote service? [Clarity, Spec §FR-006, Contract §Local model and execution boundary]
+  - Finding: The contract lists interaction classes but does not define their precise boundary, such as focus, scrolling, or interactions outside the answer view.
+- [x] CHK011 Are the conditions for local-only answer generation and the trusted runtime boundary clear enough to distinguish a local service from a forwarding or remote service? [Clarity, Spec §FR-006, Contract §Local model and execution boundary]
 - [ ] CHK012 Are execution limits, including timeout, retry, input, and output bounds, specified with sufficient precision to determine when the workflow must fail? [Ambiguity, Spec §FR-005, §FR-013, Plan §Architecture and sequencing]
+  - Finding: The plan requires bounds but does not specify their values or how configured limits are selected.
 - [ ] CHK013 Is “safe, actionable error” defined sufficiently to distinguish useful guidance from prohibited sensitive or internal details? [Clarity, Spec §FR-013, §FR-016]
+  - Finding: Prohibited details are identified, but actionable guidance is not defined for each major failure category.
 
 ## Requirement Consistency
 
 - [ ] CHK014 Are the specification's grounded-answer requirements consistent with the plan's stated limitations of automated semantic verification? [Consistency, Spec §FR-008–FR-009, Plan §Constitution Check]
-- [ ] CHK015 Are pre-publication and subsequent freshness requirements consistent with the disclosed possibility of a source changing immediately after a check or while the view is idle? [Consistency, Spec §FR-004, Contract §Source replacement and publication]
-- [ ] CHK016 Are the evaluation-trace exception and the existing content-free trace rules consistently scoped, without broadening Feature 001 traces? [Consistency, Spec §FR-017, §FR-021, Feature 001 contract §Observability]
+  - Finding: The specification states an absolute supported-claims requirement, while the plan acknowledges fallible verification; the acceptance interpretation of that limitation is not explicit.
+- [x] CHK015 Are pre-publication and subsequent freshness requirements consistent with the disclosed possibility of a source changing immediately after a check or while the view is idle? [Consistency, Spec §FR-004, Contract §Source replacement and publication]
+- [x] CHK016 Are the evaluation-trace exception and the existing content-free trace rules consistently scoped, without broadening Feature 001 traces? [Consistency, Spec §FR-017, §FR-021, Feature 001 contract §Observability]
 - [ ] CHK017 Are existing destination permissions and the additional evaluation-field disclosures aligned, including whether prior authorization covers newly disclosed fields? [Conflict, Spec §FR-016, §FR-021, Feature 001 contract §Observability]
-- [ ] CHK018 Are the single-active-question, wait-message, interruption, and terminal-outcome requirements consistent across the specification and session-state design? [Consistency, Spec §FR-014, Data model §Question request and session job]
-- [ ] CHK019 Are the no-automatic-answer-model-download requirement and the existing separately documented embedding-model download behavior clearly distinguished? [Consistency, Spec §FR-006, Plan §Technical Context, Feature 001 quickstart §Prerequisites and setup]
+  - Finding: Existing permission was granted for content-free fields; the artifacts do not explicitly say whether it remains valid for the newly disclosed evaluation fields or requires renewed authorization.
+- [x] CHK018 Are the single-active-question, wait-message, interruption, and terminal-outcome requirements consistent across the specification and session-state design? [Consistency, Spec §FR-014, Data model §Question request and session job]
+- [x] CHK019 Are the no-automatic-answer-model-download requirement and the existing separately documented embedding-model download behavior clearly distinguished? [Consistency, Spec §FR-006, Plan §Technical Context, Feature 001 quickstart §Prerequisites and setup]
 
 ## Acceptance Criteria Quality
 
 - [ ] CHK020 Can reviewers objectively determine whether each displayed factual claim has an eligible supporting source reference? [Measurability, Spec §FR-008–FR-009, §SC-002]
-- [ ] CHK021 Are acceptance criteria clear about what deterministic substitutes establish versus what requires observed local-model evaluation? [Measurability, Spec §SC-003–SC-005, Plan §Implementation verification gates]
-- [ ] CHK022 Are the evaluation dataset categories, expected answer points, expected sources, and treatment of unanswerable cases measurable without implying an unmeasured quality score? [Acceptance Criteria, Spec §FR-018–FR-019, §SC-001–SC-002]
+  - Finding: Review of expected answer points is specified, but no review rubric establishes support for every displayed claim, including unexpected claims.
+- [x] CHK021 Are acceptance criteria clear about what deterministic substitutes establish versus what requires observed local-model evaluation? [Measurability, Spec §SC-003–SC-005, Plan §Implementation verification gates]
+- [x] CHK022 Are the evaluation dataset categories, expected answer points, expected sources, and treatment of unanswerable cases measurable without implying an unmeasured quality score? [Acceptance Criteria, Spec §FR-018–FR-019, §SC-001–SC-002]
 - [ ] CHK023 Are successful trace delivery, unconfirmed delivery, disabled tracing, and detected export failure distinguishable in the acceptance requirements? [Measurability, Spec §FR-015–FR-016, Contract §Tracing and evaluation exception]
+  - Finding: The states are named, but the evidence required to confirm delivery and the criteria for detecting export failure are not specified.
 
 ## Scenario Coverage
 
-- [ ] CHK024 Are requirements for an answer with both supported and unsupported claims explicit about the retained claims and explanation of missing information? [Coverage, Spec §FR-009–FR-010]
-- [ ] CHK025 Are source changes before publication and after display both covered, including the warning, resubmission request, and treatment of unaffected claims? [Coverage, Spec §FR-004, §SC-008, Contract §Source replacement and publication]
-- [ ] CHK026 Are the requirements for missing or unavailable local models, unavailable retrieval, incompatible knowledge, and malformed outcomes distinct from abstention and empty knowledge? [Coverage, Spec §FR-006, §FR-011, §FR-013, §Edge Cases]
-- [ ] CHK027 Are evaluation-source eligibility and omission requirements complete when a selected case retrieves a mixture of eligible, unrelated, and unverifiable sources? [Coverage, Spec §FR-021–FR-022]
-- [ ] CHK028 Are authorization, revocation, destination changes, and already-started trace dispatches covered for both local and external destinations? [Coverage, Spec §FR-016, Feature 001 contract §Observability]
+- [x] CHK024 Are requirements for an answer with both supported and unsupported claims explicit about the retained claims and explanation of missing information? [Coverage, Spec §FR-009–FR-010]
+- [x] CHK025 Are source changes before publication and after display both covered, including the warning, resubmission request, and treatment of unaffected claims? [Coverage, Spec §FR-004, §SC-008, Contract §Source replacement and publication]
+- [x] CHK026 Are the requirements for missing or unavailable local models, unavailable retrieval, incompatible knowledge, and malformed outcomes distinct from abstention and empty knowledge? [Coverage, Spec §FR-006, §FR-011, §FR-013, §Edge Cases]
+- [x] CHK027 Are evaluation-source eligibility and omission requirements complete when a selected case retrieves a mixture of eligible, unrelated, and unverifiable sources? [Coverage, Spec §FR-021–FR-022]
+- [x] CHK028 Are authorization, revocation, destination changes, and already-started trace dispatches covered for both local and external destinations? [Coverage, Spec §FR-016, Feature 001 contract §Observability]
 
 ## Edge Case and Recovery Coverage
 
-- [ ] CHK029 Are requirements defined for a freshness check that cannot establish source identity or content, rather than only for a confirmed source change? [Edge Case, Contract §Source replacement and publication]
-- [ ] CHK030 Are claim and citation requirements clear when one claim depends on multiple sources and only some of them remain valid or sufficient? [Edge Case, Spec §FR-009–FR-010, Contract §Retrieval and agentic workflow]
-- [ ] CHK031 Are requirements specified for source replacement concurrent with evidence selection, publication, and evaluation-trace authorization? [Edge Case, Spec §FR-004, §FR-021, Data model §Evidence snapshot and citation, §Trace record and permissions]
-- [ ] CHK032 Are recovery and data-preservation requirements specified for interrupted or failed revision migration and replacement? [Recovery, Data model §Committed document revision, Feature 001 contract §Persistence]
-- [ ] CHK033 Are interruption, deadline, late-result, and subsequent retry requirements defined without associating a prior request's outcome with a new one? [Recovery, Spec §FR-013–FR-014, Data model §Question request and session job]
+- [x] CHK029 Are requirements defined for a freshness check that cannot establish source identity or content, rather than only for a confirmed source change? [Edge Case, Contract §Source replacement and publication]
+- [x] CHK030 Are claim and citation requirements clear when one claim depends on multiple sources and only some of them remain valid or sufficient? [Edge Case, Spec §FR-009–FR-010, Contract §Retrieval and agentic workflow]
+- [x] CHK031 Are requirements specified for source replacement concurrent with evidence selection, publication, and evaluation-trace authorization? [Edge Case, Spec §FR-004, §FR-021, Data model §Evidence snapshot and citation, §Trace record and permissions]
+- [x] CHK032 Are recovery and data-preservation requirements specified for interrupted or failed revision migration and replacement? [Recovery, Data model §Committed document revision, Feature 001 contract §Persistence]
+- [x] CHK033 Are interruption, deadline, late-result, and subsequent retry requirements defined without associating a prior request's outcome with a new one? [Recovery, Spec §FR-013–FR-014, Data model §Question request and session job]
 
 ## Non-Functional Requirements
 
 - [ ] CHK034 Are keyboard, screen-reader, and non-color-only requirements defined for question input, progress, citations, warnings, and trace disclosures? [Accessibility, Gap, Spec §FR-001, §FR-012, §SC-006]
-- [ ] CHK035 Are requirements for prompt-injection resistance and least-capability workflow boundaries explicit about untrusted evidence and their limitations? [Security, Spec §FR-005–FR-007, Plan §Constitution Check]
-- [ ] CHK036 Are exclusions defined for sensitive data in errors, logs, model interaction, and traces, including implicit or third-party capture? [Privacy, Spec §FR-006, §FR-013, §FR-017, Contract §Tracing and evaluation exception]
+  - Finding: Keyboard and screen-reader support are mentioned generally, but element-specific requirements and a non-color-only rule for the question view are not explicit.
+- [x] CHK035 Are requirements for prompt-injection resistance and least-capability workflow boundaries explicit about untrusted evidence and their limitations? [Security, Spec §FR-005–FR-007, Plan §Constitution Check]
+- [x] CHK036 Are exclusions defined for sensitive data in errors, logs, model interaction, and traces, including implicit or third-party capture? [Privacy, Spec §FR-006, §FR-013, §FR-017, Contract §Tracing and evaluation exception]
 - [ ] CHK037 Are workflow bounds and resource expectations documented without implying unmeasured latency, capacity, or quality guarantees? [Non-Functional, Spec §FR-005, §Assumptions, Plan §Technical Context]
+  - Finding: Resource needs and measurement limitations are described, but concrete workflow bounds remain unspecified as noted in CHK012.
 
 ## Dependencies and Assumptions
 
-- [ ] CHK038 Are runtime availability, manual model preparation, trusted local operation, resource needs, and setup failure guidance clearly documented as dependencies? [Dependency, Spec §FR-006, Plan §Technical Context, §Architecture and sequencing]
-- [ ] CHK039 Are the compatibility and privacy assumptions for the planned orchestration and observability dependencies identified as unverified until demonstrated? [Assumption, Plan §Implementation verification gates]
-- [ ] CHK040 Is the assumption that indexed evaluation content can be matched to the known sample sufficiently specified when ingestion configuration or source contents differ? [Assumption, Spec §FR-021–FR-022, Data model §Evaluation case and source eligibility]
+- [x] CHK038 Are runtime availability, manual model preparation, trusted local operation, resource needs, and setup failure guidance clearly documented as dependencies? [Dependency, Spec §FR-006, Plan §Technical Context, §Architecture and sequencing]
+- [x] CHK039 Are the compatibility and privacy assumptions for the planned orchestration and observability dependencies identified as unverified until demonstrated? [Assumption, Plan §Implementation verification gates]
+- [x] CHK040 Is the assumption that indexed evaluation content can be matched to the known sample sufficiently specified when ingestion configuration or source contents differ? [Assumption, Spec §FR-021–FR-022, Data model §Evaluation case and source eligibility]
 
 ## Notes
 
