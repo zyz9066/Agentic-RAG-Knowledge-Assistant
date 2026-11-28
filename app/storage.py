@@ -6,7 +6,7 @@ import math
 import os
 import sqlite3
 import struct
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from contextlib import closing, contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -61,6 +61,17 @@ class StoredChunk:
     text: str
     embedding: tuple[float, ...]
     page: int | None
+    revision: str
+    digest: str
+
+
+@dataclass(frozen=True, slots=True)
+class CitationStamp:
+    document_id: str
+    filename: str
+    chunk_id: str
+    revision: str
+    digest: str
 
 
 def _encode_embedding(vector: tuple[float, ...]) -> bytes:
@@ -94,7 +105,8 @@ class SQLiteKnowledgeStore:
                     filename TEXT NOT NULL UNIQUE COLLATE BINARY,
                     indexed_at TEXT NOT NULL,
                     embedding_model_id TEXT NOT NULL,
-                    embedding_dimension INTEGER NOT NULL CHECK (embedding_dimension > 0)
+                    embedding_dimension INTEGER NOT NULL CHECK (embedding_dimension > 0),
+                    revision TEXT NOT NULL
                 );
                 CREATE TABLE IF NOT EXISTS chunks (
                     document_id TEXT NOT NULL REFERENCES documents(document_id)
@@ -108,11 +120,38 @@ class SQLiteKnowledgeStore:
                 );
                 """
             )
+            connection.execute("BEGIN IMMEDIATE")
+            columns = {
+                row[1] for row in connection.execute("PRAGMA table_info(documents)")
+            }
+            if "revision" not in columns:
+                connection.execute("ALTER TABLE documents ADD COLUMN revision TEXT")
+            rows = connection.execute(
+                "SELECT document_id FROM documents WHERE revision IS NULL"
+            ).fetchall()
+            connection.executemany(
+                "UPDATE documents SET revision = ? WHERE document_id = ?",
+                [(uuid4().hex, row[0]) for row in rows],
+            )
+            connection.commit()
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.path, timeout=30)
         connection.execute("PRAGMA foreign_keys = ON")
         return connection
+
+    @contextmanager
+    def read_snapshot(self) -> Iterator[sqlite3.Connection]:
+        """Hold one committed SQLite read snapshot until the caller finishes."""
+        with closing(self._connect()) as connection:
+            connection.execute("BEGIN")
+            try:
+                yield connection
+            except Exception:
+                connection.rollback()
+                raise
+            else:
+                connection.commit()
 
     @contextmanager
     def reserve(self, filename: str) -> Iterator[None]:
@@ -172,11 +211,15 @@ class SQLiteKnowledgeStore:
                 document_id = previous[0] if previous is not None else uuid4().hex
                 connection.execute(
                     """
-                    INSERT INTO documents VALUES (?, ?, ?, ?, ?)
+                    INSERT INTO documents (
+                        document_id, filename, indexed_at, embedding_model_id,
+                        embedding_dimension, revision
+                    ) VALUES (?, ?, ?, ?, ?, ?)
                     ON CONFLICT(filename) DO UPDATE SET
                         indexed_at = excluded.indexed_at,
                         embedding_model_id = excluded.embedding_model_id,
-                        embedding_dimension = excluded.embedding_dimension
+                        embedding_dimension = excluded.embedding_dimension,
+                        revision = excluded.revision
                     """,
                     (
                         document_id,
@@ -184,6 +227,7 @@ class SQLiteKnowledgeStore:
                         datetime.now(UTC).isoformat(),
                         model_id,
                         dimension,
+                        uuid4().hex,
                     ),
                 )
                 connection.execute(
@@ -213,7 +257,7 @@ class SQLiteKnowledgeStore:
             rows = connection.execute(
                 """
                 SELECT documents.document_id, documents.filename, chunks.chunk_id, chunks.text,
-                       chunks.embedding, chunks.page
+                       chunks.embedding, chunks.page, documents.revision
                 FROM chunks JOIN documents USING (document_id)
                 ORDER BY documents.filename COLLATE BINARY, chunks.position
                 """
@@ -226,6 +270,48 @@ class SQLiteKnowledgeStore:
                 text=text,
                 embedding=struct.unpack(f"<{dimension}f", vector),
                 page=page,
+                revision=revision,
+                digest=hashlib.sha256(text.encode("utf-8")).hexdigest(),
             )
-            for document_id, filename, chunk_id, text, vector, page in rows
+            for document_id, filename, chunk_id, text, vector, page, revision in rows
         ]
+
+    def has_documents(self) -> bool:
+        """Check whether a committed document exists without model interaction."""
+        with closing(self._connect()) as connection:
+            return (
+                connection.execute("SELECT 1 FROM documents LIMIT 1").fetchone()
+                is not None
+            )
+
+    def citations_are_current(
+        self, citations: Sequence[StoredChunk | CitationStamp]
+    ) -> list[bool]:
+        """Check exact citation versions and content in one committed read."""
+        with closing(self._connect()) as connection:
+            connection.execute("BEGIN")
+            states: list[bool] = []
+            for citation in citations:
+                row = connection.execute(
+                    """
+                    SELECT documents.revision, chunks.text
+                    FROM documents
+                    JOIN chunks USING (document_id)
+                    WHERE documents.document_id = ?
+                      AND documents.filename = ?
+                      AND chunks.chunk_id = ?
+                    """,
+                    (
+                        citation.document_id,
+                        citation.filename,
+                        citation.chunk_id,
+                    ),
+                ).fetchone()
+                states.append(
+                    row is not None
+                    and row[0] == citation.revision
+                    and hashlib.sha256(row[1].encode("utf-8")).hexdigest()
+                    == citation.digest
+                )
+            connection.commit()
+        return states

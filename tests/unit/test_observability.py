@@ -4,6 +4,7 @@ from app.observability import (
     LangfuseTraceSink,
     RecordingTraceSink,
     TraceDiagnosticChannel,
+    TraceExportStatus,
     TracePermissionManager,
     TraceRecord,
     TraceStep,
@@ -63,7 +64,7 @@ def test_failed_operation_does_not_capture_exception_text() -> None:
 
 def test_export_failure_becomes_safe_diagnostic_not_core_failure() -> None:
     class BrokenSink:
-        def export(self, record: TraceRecord) -> None:
+        def export(self, record: TraceRecord) -> TraceExportStatus:
             raise RuntimeError("PRIVATE_DOCUMENT_SENTINEL")
 
     diagnostics = TraceDiagnosticChannel()
@@ -79,7 +80,7 @@ def test_export_failure_becomes_safe_diagnostic_not_core_failure() -> None:
 
 def test_core_exception_survives_simultaneous_trace_export_failure() -> None:
     class BrokenSink:
-        def export(self, record: TraceRecord) -> None:
+        def export(self, record: TraceRecord) -> TraceExportStatus:
             raise RuntimeError("trace transport detail")
 
     diagnostics = TraceDiagnosticChannel()

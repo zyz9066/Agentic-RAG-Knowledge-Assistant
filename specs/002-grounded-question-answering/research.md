@@ -1,6 +1,6 @@
 # Research: Evidence-Grounded Question Answering
 
-**Date**: 2026-11-26 | **Status**: Design decisions; no implementation or quality measurements
+**Date**: 2026-11-28 | **Status**: Design decisions; no implementation or quality measurements
 
 ## Orchestration and verification
 
@@ -15,8 +15,11 @@ code execution, web tools, auto-instrumentation, or provider fallback.
 database, privacy, or publication decisions to a model. A verifier must mark
 each proposed claim as supported, unsupported, or indeterminate against
 specific retrieved evidence; the app retains only supported claims with
-valid references. This is a risk reduction, not a proof of semantic entailment
-or prompt-injection immunity. Similarity alone is never sufficient.
+valid references. Support is deliberately conservative: cited evidence must
+directly state a claim (faithful paraphrase is allowed), cross-passage
+inference is not accepted, and unresolved contradictions are indeterminate.
+This is a risk reduction, not a proof of semantic entailment or
+prompt-injection immunity. Similarity alone is never sufficient.
 
 **Alternatives considered**: A single unverified agent cannot adequately
 separate drafting from checking. A model-controlled retrieval tool could skip,
@@ -52,14 +55,15 @@ inputs before these checks succeed. The operator must trust the installed
 runtime and secure its model cache and local machine; loopback alone cannot
 prove that a separately managed service does not forward data.
 
-Run each question in a supervised worker with a hard wall-clock deadline,
-request timeouts, small fixed iteration/retry and response-size limits, no
-unbounded tool calls, and an explicit context budget. Reject overflow rather
-than silently dropping supporting text. Terminate only the owned worker on
-deadline; never publish a late result. A separately managed model server may
-continue computation after client cancellation, so do not equate cancelling
-the client with stopping the server. Model-related errors are safe failures,
-not abstentions. Verify the exact timeout and cancellation behavior on both
+Run each question in a supervised worker with a 300-second wall-clock
+deadline, 120-second model-call timeouts, at most one retry per task, an
+8,192-token input ceiling, and a 1,024-token generated-output ceiling. Input
+tokens include instructions, the question, and evidence. Reject overflow
+rather than silently dropping supporting text. Terminate only the owned worker
+on deadline; never publish a late result. A separately managed model server
+may continue computation after client cancellation, so do not equate
+cancelling the client with stopping the server. Model-related errors are safe
+failures, not abstentions. Verify timeout and cancellation behavior on both
 supported operating systems.
 
 **Rationale**: The official local-model route exists, but CrewAI's native
@@ -96,12 +100,14 @@ snapshot joins revision and chunk content in one committed read; retain the
 public Feature 001 `Evidence` contract while adding a private versioned
 retrieval path. Record an internal content digest for each cited chunk.
 
-At publication and every subsequent applicable interaction/rerun, compare all
-cited revisions and chunk digests in one fresh committed snapshot. Remove an
-entire affected claim, warn, and request resubmission; unaffected claims may
-remain. A failed check is a safe error, not proof of freshness. The check is
-the point-in-time consistency boundary: a later commit can race with rendering
-and an idle browser can be stale until the next check. Disclose this explicitly.
+At publication and every subsequent app rerun or state-changing action
+(question edits, submission, navigation, keyboard/pointer activation), compare
+all cited revisions and chunk digests in one fresh committed snapshot. Passive
+focus, hover, and scrolling do not trigger a check. Remove an entire affected
+claim, warn, and request resubmission; unaffected claims may remain. A failed
+check is a safe error, not proof of freshness. The check is the point-in-time
+consistency boundary: a later commit can race with rendering and an idle
+browser can be stale until the next required check. Disclose this explicitly.
 Do not hold database locks throughout inference or claim real-time invalidation.
 
 **Alternatives considered**: Filename, document ID and positional chunk ID
@@ -115,31 +121,40 @@ Sources: [SQLite isolation](https://www.sqlite.org/isolation.html),
 
 ## Trace privacy and permissions
 
-**Decision**: Extend the existing explicitly constructed, allowlisted
-`WorkflowTracer` and `LangfuseTraceSink`, not the CrewAI automatic integration.
-Record only entered workflow/agent/task/retrieval stages, controlled status,
-duration, sanitized model and numeric usage when known. Constrain the
-Langfuse exporter to app-created spans and test it against the pinned SDK;
-disable automatic IO/exception capture and do not forward generic CrewAI
-event objects. Keep destination authorization, local confirmation, and
-revocation serialization.
+**Decision**: Create a content-free, non-persisted trace record for every
+question, containing only an opaque operation ID and entered workflow stages,
+controlled status, elapsed time, and sanitized model/numeric usage when known.
+Keep this record only for the session; it contains no question, evidence,
+filename, chunk ID, digest, prompt, output, or raw exception. Extend the
+existing explicitly constructed, allowlisted `WorkflowTracer` and
+`LangfuseTraceSink`, not the CrewAI automatic integration. Export to Langfuse
+only when it is available and the existing destination authorization is
+present. Constrain the exporter to app-created spans and test it against the
+pinned SDK; disable automatic IO/exception capture and do not forward generic
+CrewAI event objects. Keep destination authorization, local confirmation,
+and revocation serialization.
 
 Only a specific explicitly selected evaluation case may add its disclosed
-question and eligible filename/chunk IDs. Compare the entire indexed ordered
-chunk set and metadata against chunks freshly derived from the trusted bundled
+question and eligible filename/chunk IDs. Require a separate per-run
+confirmation of these disclosed fields, in addition to example selection and
+existing destination authorization. Compare the entire indexed ordered chunk
+set and metadata against chunks freshly derived from the trusted bundled
 evaluation document using the same ingestion configuration. At dispatch,
-recheck revision, full-content eligibility, selection and destination
-authorization inside the existing serialized database dispatch boundary;
-omit any unverified/unrelated identifier and warn safely. Never export document
-text, digests, raw exceptions, or ordinary questions/source identifiers.
-No trace permission is implied by choosing an example.
+recheck revision, full-content eligibility, selection, field confirmation,
+and destination authorization inside the existing serialized database
+dispatch boundary; omit any unverified/unrelated identifier and warn safely.
+Never export document text, digests, raw exceptions, or ordinary
+questions/source identifiers. Neither selection nor field confirmation grants
+standing permission for another question.
 
 Langfuse documents that `flush()` can log failures rather than raising.
-Exception-free flush is not confirmation of delivery. Implement and test a
-safe bounded failure-detection path for observable transport/export errors;
-report detected failures separately, distinguish unconfirmed delivery from
-confirmed receipt, and never claim delivery from flush alone. Preserve
-revocation semantics even on retries, shutdown, or transport failure.
+Exception-free flush is not confirmation of delivery. Track `disabled`,
+`unavailable`, `failed`, `unconfirmed`, and `confirmed` distinctly. Implement
+and test a safe bounded failure-detection path for observable transport/export
+errors; mark delivery `confirmed` only when an explicit server acknowledgment
+is correlated with that trace. Queueing or flushing alone remains
+`unconfirmed`. Preserve revocation semantics even on retries, shutdown, or
+transport failure.
 
 CrewAI's own telemetry and AMP execution tracing are separate from Langfuse.
 Ensure the selected CrewAI version cannot transmit unapproved telemetry or
@@ -165,17 +180,31 @@ Sources: [Langfuse instrumentation](https://langfuse.com/docs/observability/sdk/
 request ownership and a supervised worker whose status can be observed without
 restarting it on rerun. Validate on the server and enforce a single active
 request atomically, not merely by disabling a button. Revalidate displayed
-citations on app interactions and reruns; handle interaction paths that do
-not ordinarily trigger a Streamlit rerun rather than assuming all widgets do.
-Only the script thread renders UI. Provide keyboard-accessible textual status,
-errors, partial answers, and source references.
+citations on reruns and state-changing actions (question edits, submission,
+navigation, keyboard/pointer activation), not passive focus, hover, or
+scrolling. Handle interactions that do not ordinarily trigger a Streamlit
+rerun rather than assuming all widgets do. Only the script thread renders UI.
+Provide textual status, errors, partial answers, and source references.
+Requirements include programmatic labels, keyboard operation and visible
+focus, screen-reader announcements for progress/status/errors, readable source
+references, and warnings not conveyed by color alone. Verify these behaviors
+without claiming formal WCAG certification.
 
 Prepare original, non-sensitive, redistributable documents and at least five
 independently identified cases with expected answer points and source documents,
 covering three answerable, one unanswerable and one multi-source case. Run
-deterministic fakes for wiring and failure tests; use an opt-in real local-model
-run with human review for semantic quality. Record actual per-case outcomes,
-denominators and unavailable measurements; fakes do not measure model quality.
+deterministic fakes for wiring and failure tests; use an explicitly opt-in
+local-model evaluator with human review for semantic quality. Emit one JSONL
+observation per case following the workflow contract: record the workflow
+outcome, expected points and sources, every displayed claim and cited
+reference, safe failure code, and measured timing when available. Initialize
+claim-support, citation, expected-point, abstention, and missing-point review
+fields as pending, then let reviewers update a local copy using the allowed
+outcomes in the workflow contract. Keep unavailable distinct from negative
+results; do not infer review outcomes or fabricate measurements. Fakes do not
+measure model quality. Do not invent aggregate scores or denominators. The
+evaluator emits observations for review and does not create the final
+evaluation report.
 
 **Alternatives considered**: Streamlit state alone is not an atomic
 concurrency guard. Automatic contentful tracing of all evaluation retrievals

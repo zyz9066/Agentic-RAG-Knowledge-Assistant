@@ -52,6 +52,53 @@ and cosine score. Scores are not calibrated relevance probabilities. The
 default offline test suite uses deterministic substitutes and does not
 download a model or contact Langfuse.
 
+## Ask questions locally
+
+Feature 002 uses a manually installed Ollama runtime and a manually prepared
+local answer model. Install Ollama from its official distribution, then
+prepare the default model while the Ollama service is available:
+
+```powershell
+ollama pull qwen2.5:7b
+ollama list
+```
+
+The application never downloads or falls back to a model. On the first
+submitted question with indexed documents, it starts its own `ollama serve`
+process on the configured loopback address, refuses an already occupied
+port, disables Ollama cloud features and environment proxies for that
+process, and stops it when Streamlit exits. The model pull is a separate
+operator action and requires network access. The default model is several
+gigabytes; runtime memory and response latency depend on the machine and
+context. The answer model is not used to index documents.
+
+Configure `ANSWER_MODEL`, `OLLAMA_HOST`, and `OLLAMA_EXECUTABLE` through
+environment variables; see [.env.example](.env.example). `OLLAMA_HOST` must
+use literal `http://127.0.0.1` with an optional port. `OLLAMA_EXECUTABLE` may
+be an executable path if Ollama is not on `PATH`. The app does not load `.env`
+files automatically. Use non-sensitive material for manual model checks.
+
+The Ask Questions view returns claim-level citations and may abstain when
+retrieved evidence is insufficient. A changed source invalidates affected
+claims on the next app rerun or interaction; an idle page cannot detect a
+change until that happens. Ordinary question traces exclude question and
+document content. Export remains separately disabled or authorized under the
+trace controls described above. Evaluation-trace question/source fields need
+separate per-run confirmation and exact source-eligibility checks. Langfuse
+flush alone is reported as unconfirmed, not as confirmed delivery.
+
+Run the local evaluation only after manually preparing the embedding cache,
+indexing the bundled evaluation sources, and confirming use of the local
+answer model:
+
+```powershell
+uv run --locked python -m scripts.evaluate_feature_002 --dataset evaluation\feature_002\cases.jsonl --confirm-local-model
+```
+
+The evaluator writes one JSONL observation per case to standard output.
+Review fields remain pending; it does not calculate quality metrics or create
+the final evaluation report.
+
 ## Trace privacy and permissions
 
 Tracing is optional. Configure `LANGFUSE_HOST`, `LANGFUSE_PUBLIC_KEY`, and
@@ -85,8 +132,16 @@ uv run --locked pytest
 The real-model check is opt-in and requires a preloaded model cache:
 
 ```powershell
-$env:RUN_REAL_MODEL_TESTS = "1"
-uv run --locked pytest tests\integration\test_real_model.py
+$env:RUN_QUESTION_MODEL_TESTS = "1"
+uv run --locked pytest tests\integration\test_real_question_model.py
+```
+
+The live Langfuse smoke check is also opt-in, sends only a synthetic allowlisted
+trace, and requires credentials and an explicitly authorized destination:
+
+```powershell
+$env:RUN_LANGFUSE_QUESTION_TESTS = "1"
+uv run --locked pytest tests\integration\test_live_question_trace.py
 ```
 
 Use temporary, non-sensitive data for manual verification. AppTest cannot

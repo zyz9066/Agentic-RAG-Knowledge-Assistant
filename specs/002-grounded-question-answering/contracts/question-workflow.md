@@ -17,13 +17,19 @@ continues unchanged unless an internal extension is specified here.
 - Display accessible textual progress while processing; final states include
   cited answer, partial answer with missing information, abstention, empty
   knowledge, and safe actionable failure. Do not publish draft or unchecked
-  verification text. Support keyboard use and test screen-reader behavior.
-- Previously displayed claims are checked on the next app interaction or
-  rerun. Where Streamlit does not ordinarily rerun for an interaction, an
-  app-owned v2 interaction component must immediately hide the prior answer
-  and trigger validation; restore only freshly checked claims. Avoid reading or
-  transmitting input content in the interaction trigger. Tests cover typing,
-  pointer, keyboard, navigation, reruns, cleanup and duplicate event handling.
+  verification text. The question, submit, and evaluation-disclosure controls
+  have programmatic labels, keyboard operation, and visible focus. Announce
+  progress/status/error changes to screen readers; render source references as
+  readable text; do not communicate warnings or status by color alone. Verify
+  these behaviors without claiming formal WCAG certification.
+- Previously displayed claims are checked before publication, on every app
+  rerun, and on state-changing actions: question edits, submission, navigation,
+  and keyboard/pointer activation. Passive focus, hover, and scrolling do not
+  trigger checks. Where Streamlit does not ordinarily rerun for a required
+  action, an app-owned v2 interaction component immediately hides the prior
+  answer and triggers validation; restore only freshly checked claims. Avoid
+  reading or transmitting input content in the interaction trigger. Tests
+  cover the required actions, reruns, cleanup, and duplicate event handling.
   Clearly disclose that an idle view can become stale.
 
 ## Retrieval and agentic workflow
@@ -35,12 +41,22 @@ continues unchanged unless an internal extension is specified here.
 - Empty committed knowledge yields the distinct no-knowledge outcome.
   Incompatible index, embedding, retrieval, model, task and timeout errors
   remain failures, not empty knowledge or abstention.
+- User guidance is failure-specific: direct an unavailable/misconfigured local
+  model to documented manual setup; an incompatible index to the documented
+  index recovery workflow; a timeout to retrying with less evidence or after
+  service recovery; and other repeated task/model failures to retry or contact
+  the maintainer using only the opaque operation ID. Report trace problems
+  separately with a safe configuration/authorization check.
 - A CrewAI Flow orchestrates deterministic retrieval followed by two sequential
   bounded agent tasks. The drafting task returns atomic claims and candidate
   citation IDs; the verifier classifies each claim against the cited retrieved
   content as supported, unsupported or indeterminate. Evidence is delimited
   untrusted data; document instructions have no authority. The model gets no
   external or write tools, delegation, memory, or code execution.
+- Enforce ceilings of 120 seconds per model call, 300 seconds per worker, one
+  retry per task, 8,192 input tokens (instructions, question, and evidence),
+  and 1,024 generated output tokens. Fail on overflow; do not silently truncate
+  supporting evidence.
 - Application code validates complete structured outputs, one decision per
   claim, citation membership and source identities. It excludes unsupported,
   indeterminate, missing, fabricated, ambiguous, or stale claims. A claim with
@@ -57,12 +73,14 @@ continues unchanged unless an internal extension is specified here.
   replacement, changes its opaque revision atomically with the complete
   chunk set. Failed replacement leaves the old revision and content intact.
   Migrate existing rows transactionally without losing documents or embeddings.
-- Before publishing and on each subsequent interaction/rerun, read all cited
-  document revisions and exact chunk-content digests in one fresh committed
-  snapshot. A mismatch or missing source invalidates the entire affected
-  claim; preserve unaffected claims, warn that a source changed, and request
-  resubmission. If verification itself fails, hide claims and show a safe
-  error. A new request is not started automatically.
+- Before publishing, on every subsequent app rerun, and on state-changing
+  actions (question edits, submission, navigation, keyboard/pointer
+  activation), read all cited document revisions and exact chunk-content
+  digests in one fresh committed snapshot. Passive focus, hover, and scrolling
+  do not trigger checks. A mismatch or missing source invalidates the entire
+  affected claim; preserve unaffected claims, warn that a source changed, and
+  request resubmission. If verification itself fails, hide claims and show a
+  safe error. A new request is not started automatically.
 - The freshness read is a point-in-time check. Do not hold a database lock
   across model inference or claim instantaneous invalidation: a replacement
   can commit after the check or while the view is idle. The UI discloses
@@ -91,43 +109,76 @@ continues unchanged unless an internal extension is specified here.
 
 ## Tracing and evaluation exception
 
-- Trace each entered question, retrieval, drafting and verification stage when
-  available and authorized, using controlled names, opaque ID, status, elapsed
-  time and sanitized model/usage metadata. Never auto-capture model arguments,
-  results, document text or exceptions; generic framework spans are excluded.
-  No contentful CrewAI AMP traces or unapproved framework telemetry may bypass
-  the authorized Langfuse route.
+- Create a content-free, non-persisted local trace record for every question,
+  including when Langfuse is unavailable or disabled. Record only an opaque
+  operation ID, entered retrieval/drafting/verification stages, controlled
+  status, elapsed time, and sanitized model/usage metadata when available.
+  Export to Langfuse only when available and authorized. Never auto-capture
+  model arguments, results, document text or exceptions; generic framework
+  spans are excluded. No contentful CrewAI AMP traces or unapproved framework
+  telemetry may bypass the authorized Langfuse route.
 - Ordinary requests and all Feature 001 operations exclude questions,
   filenames, chunk IDs, document text and other previously prohibited data.
   For a specifically selected evaluation execution only, after disclosure of
-  its question, destination and fields, allow the question and verified
-  eligible filenames/chunk IDs. Do not export text, content hashes, unrelated
-  sources, credentials or raw exceptions.
+  its question, destination and fields, require separate per-run confirmation
+  of the question/source-ID fields, in addition to destination authorization.
+  Allow only the question and verified eligible filenames/chunk IDs. Do not
+  export text, content hashes, unrelated sources, credentials or raw
+  exceptions. Selection and field confirmation grant no standing permission.
 - Verify source eligibility by comparing the full ordered indexed chunks,
   IDs and page metadata with the known sample generated using the same
   ingestion configuration. A same-name private replacement fails. Recheck
   identity, content and authorization with dispatch under the existing
   serialization boundary. If a source fails verification omit its identifiers;
-  if selection or destination eligibility fails omit all exceptional fields.
-  Report a safe diagnostic if requested content export cannot proceed.
+  if selection, per-run field confirmation, or destination authorization fails,
+  omit all exceptional fields. Report a safe diagnostic if requested content
+  export cannot proceed.
 - Existing local confirmation, external destination authorization,
   revocation, route changes and outstanding dispatch rules are unchanged.
-  Missing, disabled, failed and unconfirmed tracing remain distinguishable;
-  no successful answer or failure is changed by a tracing problem. Detect
-  observable exporter errors without relying on exception-free `flush()` as
-  delivery proof, and never claim delivery without confirmation.
+  Disabled, unavailable, failed, unconfirmed, and confirmed tracing remain
+  distinguishable; no successful answer or failure is changed by a tracing
+  problem. Mark delivery confirmed only on an explicit server acknowledgment
+  tied to the trace. Queueing or an exception-free `flush()` is not proof; if
+  the SDK cannot expose the acknowledgment, leave delivery unconfirmed.
+  Detect observable exporter errors separately.
 
 ## Evaluation and offline verification
 
 - Supply at least five redistributable non-sensitive cases with expected
   answer points and expected document sources: at least three answerable, one
-  unanswerable, and one requiring multiple chunks or documents.
+  unanswerable, and one requiring multiple chunks or documents. The
+  multi-source case must have at least two distinct expected points, each
+  directly stated in a separate supporting chunk or document; it must not
+  require inference across sources.
 - Deterministic tests exercise answer/partial/abstention, fabricated and
   non-supporting citations, untrusted instructions, error distinctions, UI
   ownership, timeouts, revision races, trace isolation and evaluation
   eligibility. They make no real model or Langfuse calls.
-- An opt-in local-model evaluation records individual observed claims,
-  reference correctness, abstentions, missing points, relevant failures and
-  any actually measured timing. Human review distinguishes retrieval and
-  semantic errors; unavailable results stay unavailable. No final evaluation
-  report or unmeasured accuracy claim is part of this planning command.
+- An opt-in local-model evaluation records, per case, expected-point coverage,
+  every displayed claim and its cited-source correctness, abstention quality,
+  missing points, relevant failures, and measured timing when available.
+  Human review distinguishes retrieval and semantic errors; unavailable
+  results stay unavailable. Do not claim unmeasured accuracy or generate the
+  final evaluation report from this evaluator.
+- Define the evaluator as an explicit command over the bundled case dataset;
+  it must require opt-in confirmation, use the local model only, emit
+  per-case observations, and not generate the final evaluation report.
+- Emit exactly one JSONL object per case with `case_id`, `workflow_status`
+  (`complete`, `partial`, `abstained`, `no_knowledge`, or `failed`),
+  `expected_sources`, `expected_point_reviews` (each entry has `point` and
+  `review_status`, one of `pending`, `covered`, `not_covered`, or `unavailable`),
+  and `claims` (each entry has `text`, `citations` containing `filename` and
+  `chunk_id`, `support_review` one of `pending`, `supported`, `unsupported`,
+  `indeterminate`, or `unavailable`, and `citation_review` one of `pending`,
+  `correct`, `incorrect`, or `unavailable`).
+- `abstention_review` is one of `pending`, `appropriate`, `inappropriate`,
+  `not_applicable`, or `unavailable`. `missing_points_review` is an object
+  with `status` (`pending`, `reviewed`, or `unavailable`) and `points`; points
+  are null while pending/unavailable and a list when reviewed, with an empty
+  list meaning no missing points. `failure_code` is a safe code or null;
+  `elapsed_ms` is a measured non-negative integer or null.
+- The evaluator initializes human-review fields as pending and does not infer
+  citation correctness, point coverage, abstention quality, or missing points.
+  Reviewers save/update a local copy of the JSONL observations using the
+  defined outcomes before treating those judgments as measured. `unavailable`
+  is distinct from a negative review. Do not invent aggregate scores.

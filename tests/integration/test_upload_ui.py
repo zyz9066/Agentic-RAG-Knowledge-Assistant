@@ -8,6 +8,8 @@ from streamlit.testing.v1 import AppTest
 from app import embeddings
 from app.storage import SQLiteKnowledgeStore
 
+pytestmark = pytest.mark.allow_loopback
+
 _APP = Path(__file__).parents[2] / "app" / "ui.py"
 
 

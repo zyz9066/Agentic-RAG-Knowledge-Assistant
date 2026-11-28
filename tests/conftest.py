@@ -1,9 +1,17 @@
 """Offline substitutes and temporary-storage fixtures."""
 
 import hashlib
+import os
+import socket
 from pathlib import Path
+from typing import Any
 
 import pytest
+
+os.environ["CREWAI_STORAGE_DIR"] = str(Path(__file__).parent / ".crewai-test-storage")
+os.environ["CREWAI_DISABLE_TELEMETRY"] = "true"
+os.environ["CREWAI_TRACING_ENABLED"] = "false"
+os.environ["OTEL_SDK_DISABLED"] = "true"
 
 
 class FakeEmbeddings:
@@ -55,3 +63,41 @@ def recording_trace() -> RecordingTrace:
 @pytest.fixture
 def knowledge_dir(tmp_path: Path) -> Path:
     return tmp_path / "knowledge"
+
+
+@pytest.fixture(autouse=True)
+def deny_unapproved_network(
+    monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest
+) -> None:
+    original_connect = socket.socket.connect
+    allow_loopback = request.node.get_closest_marker("allow_loopback") is not None
+    credentialed = request.node.get_closest_marker("credentialed") is not None
+    run_local_model = credentialed and os.environ.get("RUN_QUESTION_MODEL_TESTS") == "1"
+    run_live_trace = (
+        credentialed and os.environ.get("RUN_LANGFUSE_QUESTION_TESTS") == "1"
+    )
+
+    def refuse(sock: socket.socket, address: Any) -> object:
+        if (
+            allow_loopback
+            and isinstance(address, tuple)
+            and address
+            and address[0] in {"127.0.0.1", "::1"}
+            and len(address) > 1
+            and isinstance(address[1], int)
+            and address[1] >= 49152
+        ):
+            return original_connect(sock, address)
+        if (
+            run_local_model
+            and isinstance(address, tuple)
+            and len(address) > 1
+            and address[0] == "127.0.0.1"
+            and address[1] == 11434
+        ):
+            return original_connect(sock, address)
+        if run_live_trace:
+            return original_connect(sock, address)
+        raise RuntimeError("test tried to use the network")
+
+    monkeypatch.setattr(socket.socket, "connect", refuse)

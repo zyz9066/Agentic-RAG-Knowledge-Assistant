@@ -246,3 +246,4 @@ data/model-cache/
 *.swp
 .DS_Store
 Thumbs.db
+tests/.crewai-test-storage/

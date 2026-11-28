@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Local knowledge upload and evidence retrieval"
 requires-python = ">=3.11,<3.14"
 dependencies = [
+    "crewai==1.15.45",
     "fastembed==0.9.1",
     "langfuse==5.2.0",
     "pypdf==7.1.1",
@@ -27,3 +28,7 @@ include = ["app", "tests"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+    "allow_loopback: allow loopback sockets for explicit local transport tests",
+    "credentialed: requires an explicitly enabled local model or live service",
+]

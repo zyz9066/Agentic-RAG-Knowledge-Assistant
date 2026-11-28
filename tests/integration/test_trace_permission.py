@@ -5,6 +5,8 @@ import threading
 import time
 from pathlib import Path
 
+import pytest
+
 from app.observability import (
     TracePermissionManager,
     TraceRecord,
@@ -48,6 +50,7 @@ def test_external_permission_is_opt_in_persistent_and_revocable(tmp_path: Path) 
     assert changed.state == "external_disabled"
 
 
+@pytest.mark.allow_loopback
 def test_local_confirmation_is_per_process_and_checks_loopback_peer(
     tmp_path: Path,
 ) -> None:
@@ -81,6 +84,7 @@ def test_hostnames_are_not_treated_as_local_and_proxies_are_bypassed(
     client.close()
 
 
+@pytest.mark.allow_loopback
 def test_route_invalidation_revokes_other_process_confirmations(tmp_path: Path) -> None:
     server = socket.socket()
     server.bind(("127.0.0.1", 0))

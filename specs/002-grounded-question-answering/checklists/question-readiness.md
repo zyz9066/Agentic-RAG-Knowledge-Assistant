@@ -20,44 +20,43 @@ reviewed and satisfied; it does not mean implementation work is complete.
 - [x] CHK001 Are requirements for answerable, partially answerable, unanswerable, and conflicting-evidence questions defined as distinct outcomes? [Completeness, Spec §FR-008–FR-011]
 - [x] CHK002 Are claim-level support and source-reference requirements defined for answers that combine information from multiple chunks or documents? [Completeness, Spec §FR-004, §FR-008–FR-010]
 - [x] CHK003 Are permitted and prohibited trace fields specified separately for ordinary questions, selected evaluation cases, and existing indexing and retrieval operations? [Completeness, Spec §FR-015–FR-017, §FR-021–FR-022]
-- [ ] CHK004 Are the disclosure, example selection, and independently required destination authorization requirements complete for contentful evaluation traces? [Completeness, Spec §FR-021–FR-022]
-  - Finding: Selection and disclosure are specified, but whether existing destination authorization covers the additional fields remains unresolved; see CHK017.
+- [x] CHK004 Are the disclosure, example selection, and independently required destination authorization requirements complete for contentful evaluation traces? [Completeness, Spec §FR-021–FR-022]
+  - Resolution: FR-021 requires explicit example selection, separate per-run field confirmation, and existing destination authorization.
 - [x] CHK005 Are distinct user-facing outcomes specified for blank input, an empty knowledge base, processing failures, and unavailable tracing? [Completeness, Spec §FR-002, §FR-011, §FR-013, §FR-016]
 - [x] CHK006 Are preservation requirements explicit for existing upload, replacement, retrieval, privacy, and consent behavior? [Completeness, Spec §FR-003, Feature 001 contract §Retrieval, §Observability, §Persistence]
 
 ## Requirement Clarity
 
-- [ ] CHK007 Are the criteria for a claim being supported, unsupported, or indeterminate sufficiently clear for consistent review, including when evidence is incomplete or contradictory? [Clarity, Spec §FR-008–FR-010]
-  - Finding: The outcomes are named, but the criteria for classifying support and resolving contradictory evidence are not defined for consistent review.
+- [x] CHK007 Are the criteria for a claim being supported, unsupported, or indeterminate sufficiently clear for consistent review, including when evidence is incomplete or contradictory? [Clarity, Spec §FR-008–FR-010]
+  - Resolution: FR-009 requires direct support from cited evidence, permits faithful paraphrase, disallows cross-passage inference, and treats unresolved contradictions as indeterminate.
 - [x] CHK008 Are citation identity, claim-to-source association, and the treatment of ambiguous or non-retrieved references specified unambiguously? [Clarity, Spec §FR-004, §FR-009]
 - [x] CHK009 Is the meaning of a changed source clear for identical-content replacement, changed content, missing sources, and failed replacement? [Clarity, Spec §FR-004, Contract §Source replacement and publication]
-- [ ] CHK010 Is the boundary of “next app interaction or rerun” clear for edits, navigation, keyboard and pointer interactions, and idle views? [Ambiguity, Spec §FR-004, Contract §Submission and UI]
-  - Finding: The contract lists interaction classes but does not define their precise boundary, such as focus, scrolling, or interactions outside the answer view.
+- [x] CHK010 Is the boundary of “next app interaction or rerun” clear for edits, navigation, keyboard and pointer interactions, and idle views? [Ambiguity, Spec §FR-004, Contract §Submission and UI]
+  - Resolution: FR-004 specifies reruns and state-changing actions and excludes passive focus, hover, and scrolling; an idle view may be stale until the next check.
 - [x] CHK011 Are the conditions for local-only answer generation and the trusted runtime boundary clear enough to distinguish a local service from a forwarding or remote service? [Clarity, Spec §FR-006, Contract §Local model and execution boundary]
-- [ ] CHK012 Are execution limits, including timeout, retry, input, and output bounds, specified with sufficient precision to determine when the workflow must fail? [Ambiguity, Spec §FR-005, §FR-013, Plan §Architecture and sequencing]
-  - Finding: The plan requires bounds but does not specify their values or how configured limits are selected.
-- [ ] CHK013 Is “safe, actionable error” defined sufficiently to distinguish useful guidance from prohibited sensitive or internal details? [Clarity, Spec §FR-013, §FR-016]
-  - Finding: Prohibited details are identified, but actionable guidance is not defined for each major failure category.
+- [x] CHK012 Are execution limits, including timeout, retry, input, and output bounds, specified with sufficient precision to determine when the workflow must fail? [Ambiguity, Spec §FR-005, §FR-013, Plan §Architecture and sequencing]
+  - Resolution: FR-005 fixes model-call and worker timeouts, retry count, and input/output token ceilings, and requires fail-safe overflow handling.
+- [x] CHK013 Is “safe, actionable error” defined sufficiently to distinguish useful guidance from prohibited sensitive or internal details? [Clarity, Spec §FR-013, §FR-016]
+  - Resolution: FR-013 defines category-specific guidance for local-model setup, index recovery, timeouts, repeated task/model failures, and tracing problems while excluding sensitive/internal details.
 
 ## Requirement Consistency
 
-- [ ] CHK014 Are the specification's grounded-answer requirements consistent with the plan's stated limitations of automated semantic verification? [Consistency, Spec §FR-008–FR-009, Plan §Constitution Check]
-  - Finding: The specification states an absolute supported-claims requirement, while the plan acknowledges fallible verification; the acceptance interpretation of that limitation is not explicit.
+- [x] CHK014 Are the specification's grounded-answer requirements consistent with the plan's stated limitations of automated semantic verification? [Consistency, Spec §FR-008–FR-009, Plan §Constitution Check]
 - [x] CHK015 Are pre-publication and subsequent freshness requirements consistent with the disclosed possibility of a source changing immediately after a check or while the view is idle? [Consistency, Spec §FR-004, Contract §Source replacement and publication]
 - [x] CHK016 Are the evaluation-trace exception and the existing content-free trace rules consistently scoped, without broadening Feature 001 traces? [Consistency, Spec §FR-017, §FR-021, Feature 001 contract §Observability]
-- [ ] CHK017 Are existing destination permissions and the additional evaluation-field disclosures aligned, including whether prior authorization covers newly disclosed fields? [Conflict, Spec §FR-016, §FR-021, Feature 001 contract §Observability]
-  - Finding: Existing permission was granted for content-free fields; the artifacts do not explicitly say whether it remains valid for the newly disclosed evaluation fields or requires renewed authorization.
+- [x] CHK017 Are existing destination permissions and the additional evaluation-field disclosures aligned, including whether prior authorization covers newly disclosed fields? [Conflict, Spec §FR-016, §FR-021, Feature 001 contract §Observability]
+  - Resolution: FR-021 requires existing destination authorization in addition to fresh per-run confirmation of the disclosed question and source-ID fields.
 - [x] CHK018 Are the single-active-question, wait-message, interruption, and terminal-outcome requirements consistent across the specification and session-state design? [Consistency, Spec §FR-014, Data model §Question request and session job]
 - [x] CHK019 Are the no-automatic-answer-model-download requirement and the existing separately documented embedding-model download behavior clearly distinguished? [Consistency, Spec §FR-006, Plan §Technical Context, Feature 001 quickstart §Prerequisites and setup]
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK020 Can reviewers objectively determine whether each displayed factual claim has an eligible supporting source reference? [Measurability, Spec §FR-008–FR-009, §SC-002]
-  - Finding: Review of expected answer points is specified, but no review rubric establishes support for every displayed claim, including unexpected claims.
+- [x] CHK020 Can reviewers objectively determine whether each displayed factual claim has an eligible supporting source reference? [Measurability, Spec §FR-008–FR-009, §SC-002]
+  - Resolution: FR-009 defines direct support and eligible citations; SC-002 requires reviewers to inspect every displayed claim, including claims not listed as expected points.
 - [x] CHK021 Are acceptance criteria clear about what deterministic substitutes establish versus what requires observed local-model evaluation? [Measurability, Spec §SC-003–SC-005, Plan §Implementation verification gates]
 - [x] CHK022 Are the evaluation dataset categories, expected answer points, expected sources, and treatment of unanswerable cases measurable without implying an unmeasured quality score? [Acceptance Criteria, Spec §FR-018–FR-019, §SC-001–SC-002]
-- [ ] CHK023 Are successful trace delivery, unconfirmed delivery, disabled tracing, and detected export failure distinguishable in the acceptance requirements? [Measurability, Spec §FR-015–FR-016, Contract §Tracing and evaluation exception]
-  - Finding: The states are named, but the evidence required to confirm delivery and the criteria for detecting export failure are not specified.
+- [x] CHK023 Are successful trace delivery, unconfirmed delivery, disabled tracing, and detected export failure distinguishable in the acceptance requirements? [Measurability, Spec §FR-015–FR-016, Contract §Tracing and evaluation exception]
+  - Resolution: FR-015 requires explicit server acknowledgment tied to the trace for confirmation; queue/flush alone remains unconfirmed, with disabled, unavailable, failed, unconfirmed, and confirmed states distinguished.
 
 ## Scenario Coverage
 
@@ -77,12 +76,11 @@ reviewed and satisfied; it does not mean implementation work is complete.
 
 ## Non-Functional Requirements
 
-- [ ] CHK034 Are keyboard, screen-reader, and non-color-only requirements defined for question input, progress, citations, warnings, and trace disclosures? [Accessibility, Gap, Spec §FR-001, §FR-012, §SC-006]
-  - Finding: Keyboard and screen-reader support are mentioned generally, but element-specific requirements and a non-color-only rule for the question view are not explicit.
+- [x] CHK034 Are keyboard, screen-reader, and non-color-only requirements defined for question input, progress, citations, warnings, and trace disclosures? [Accessibility, Gap, Spec §FR-001, §FR-012, §SC-006]
+  - Resolution: FR-001, FR-012, and SC-006 require labeled keyboard-operable controls, visible focus, announced status/errors, readable references, and non-color-only warnings; no formal WCAG claim is made.
 - [x] CHK035 Are requirements for prompt-injection resistance and least-capability workflow boundaries explicit about untrusted evidence and their limitations? [Security, Spec §FR-005–FR-007, Plan §Constitution Check]
 - [x] CHK036 Are exclusions defined for sensitive data in errors, logs, model interaction, and traces, including implicit or third-party capture? [Privacy, Spec §FR-006, §FR-013, §FR-017, Contract §Tracing and evaluation exception]
-- [ ] CHK037 Are workflow bounds and resource expectations documented without implying unmeasured latency, capacity, or quality guarantees? [Non-Functional, Spec §FR-005, §Assumptions, Plan §Technical Context]
-  - Finding: Resource needs and measurement limitations are described, but concrete workflow bounds remain unspecified as noted in CHK012.
+- [x] CHK037 Are workflow bounds and resource expectations documented without implying unmeasured latency, capacity, or quality guarantees? [Non-Functional, Spec §FR-005, §Assumptions, Plan §Technical Context]
 
 ## Dependencies and Assumptions
 
